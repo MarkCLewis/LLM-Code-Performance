@@ -1,0 +1,10 @@
+[package]
+name = "nbody_simulation_opt"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rand = "0.8"
+rayon = "1.10"
+ordered-float = "4.2" # Keep if using the crate version
+typed-arena = "2.0"   # Add this

@@ -1,0 +1,1 @@
+julia -t auto -O3 --math-mode=fast your_nbody_script.jl
