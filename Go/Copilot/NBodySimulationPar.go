@@ -1,136 +1,122 @@
+//Certainly! Here's the modified version of the 3-D N-body simulation in Go, using goroutines and channels for parallelism:
+//This version uses goroutines and a sync.WaitGroup to parallelize the force calculations and position updates. The sync.Mutex is used to safely update the shared energy variable during the energy calculation.
+
 package main
 
 import (
-	"fmt"
-	"math"
-	"math/rand"
-	"sync"
-	"time"
+"fmt"
+"math"
+"sync"
 )
 
 const (
-	G          = 6.67430e-11 // Gravitational constant
-	DT         = 1.0         // Time step
-	NUM_BODIES = 1000000     // Number of bodies
-	STEPS      = 1000        // Simulation steps
+G       = 6.67430e-11 // Gravitational constant
+DT      = 1e-3        // Time step
+NumBodies = 1000000   // Number of bodies
 )
 
 type Body struct {
-	Position [3]float64
-	Velocity [3]float64
-	Mass     float64
+x, y, z    float64
+vx, vy, vz float64
+mass       float64
 }
 
-func computeEnergy(bodies []Body) (kinetic, potential float64) {
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	n := len(bodies)
-	wg.Add(n)
+func initializeBodies(bodies []Body) {
+bodies[0] = Body{0, 0, 0, 0, 0, 0, 1e30} // Central body mass
 
-	for i := 0; i < n; i++ {
-		go func(i int) {
-			defer wg.Done()
-			speedSq := bodies[i].Velocity[0]*bodies[i].Velocity[0] +
-				bodies[i].Velocity[1]*bodies[i].Velocity[1] +
-				bodies[i].Velocity[2]*bodies[i].Velocity[2]
-			kineticPart := 0.5 * bodies[i].Mass * speedSq
-			potentialPart := 0.0
-			for j := i + 1; j < n; j++ {
-				dx := bodies[i].Position[0] - bodies[j].Position[0]
-				dy := bodies[i].Position[1] - bodies[j].Position[1]
-				dz := bodies[i].Position[2] - bodies[j].Position[2]
-				r := math.Sqrt(dx*dx + dy*dy + dz*dz)
-				if r > 0 {
-					potentialPart -= G * bodies[i].Mass * bodies[j].Mass / r
-				}
-			}
-			mu.Lock()
-			kinetic += kineticPart
-			potential += potentialPart
-			mu.Unlock()
-		}(i)
-	}
-	wg.Wait()
-	return
+for i := 1; i < len(bodies); i++ {
+angle := 2 * math.Pi * float64(i) / float64(len(bodies)-1)
+bodies[i] = Body{
+x:    math.Cos(angle) * 1e11,
+y:    math.Sin(angle) * 1e11,
+z:    0,
+vx:   -math.Sin(angle) * math.Sqrt(G*bodies[0].mass/1e11),
+vy:   math.Cos(angle) * math.Sqrt(G*bodies[0].mass/1e11),
+vz:   0,
+mass: 1e24, // Small body mass
+}
+}
 }
 
-func updatePositions(bodies []Body) {
-	var wg sync.WaitGroup
-	n := len(bodies)
-	wg.Add(n)
-	for i := 0; i < n; i++ {
-		go func(i int) {
-			defer wg.Done()
-			for j := 0; j < 3; j++ {
-				bodies[i].Position[j] += bodies[i].Velocity[j] * DT
-			}
-		}(i)
-	}
-	wg.Wait()
+func calculateEnergy(bodies []Body) float64 {
+energy := 0.0
+var wg sync.WaitGroup
+var mu sync.Mutex
+
+for i := range bodies {
+wg.Add(1)
+go func(i int) {
+defer wg.Done()
+kinetic := 0.5 * bodies[i].mass * (bodies[i].vx*bodies[i].vx + bodies[i].vy*bodies[i].vy + bodies[i].vz*bodies[i].vz)
+potential := 0.0
+for j := range bodies {
+if i != j {
+dx := bodies[i].x - bodies[j].x
+dy := bodies[i].y - bodies[j].y
+dz := bodies[i].z - bodies[j].z
+distance := math.Sqrt(dx*dx + dy*dy + dz*dz)
+potential -= G * bodies[i].mass * bodies[j].mass / distance
+}
+}
+mu.Lock()
+energy += kinetic + 0.5*potential
+mu.Unlock()
+}(i)
+}
+wg.Wait()
+return energy
 }
 
-func updateVelocities(bodies []Body) {
-	var wg sync.WaitGroup
-	n := len(bodies)
-	wg.Add(n)
-	for i := 0; i < n; i++ {
-		go func(i int) {
-			defer wg.Done()
-			ax, ay, az := 0.0, 0.0, 0.0
-			for j := 0; j < n; j++ {
-				if i != j {
-					dx := bodies[j].Position[0] - bodies[i].Position[0]
-					dy := bodies[j].Position[1] - bodies[i].Position[1]
-					dz := bodies[j].Position[2] - bodies[i].Position[2]
-					r := math.Sqrt(dx*dx + dy*dy + dz*dz)
-					if r > 0 {
-						factor := G * bodies[j].Mass / (r * r * r)
-						ax += factor * dx
-						ay += factor * dy
-						az += factor * dz
-					}
-				}
-			}
-			bodies[i].Velocity[0] += ax * DT
-			bodies[i].Velocity[1] += ay * DT
-			bodies[i].Velocity[2] += az * DT
-		}(i)
-	}
-	wg.Wait()
-}
+func kickStep(bodies []Body) {
+var wg sync.WaitGroup
 
-func initializeOrbitingBodies(numBodies int, centralMass float64) []Body {
-	bodies := make([]Body, numBodies)
-	bodies[0] = Body{Mass: centralMass}
-	radius := 1.0e9
-	for i := 1; i < numBodies; i++ {
-		angle := 2.0 * math.Pi * rand.Float64()
-		posX := radius * math.Cos(angle)
-		posY := radius * math.Sin(angle)
-		speed := math.Sqrt(G * centralMass / radius)
-		velX := -speed * math.Sin(angle)
-		velY := speed * math.Cos(angle)
-		bodies[i] = Body{
-			Position: [3]float64{posX, posY, 0},
-			Velocity: [3]float64{velX, velY, 0},
-			Mass:     1.0,
-		}
-	}
-	return bodies
+for i := range bodies {
+wg.Add(1)
+go func(i int) {
+defer wg.Done()
+ax, ay, az := 0.0, 0.0, 0.0
+for j := range bodies {
+if i != j {
+dx := bodies[j].x - bodies[i].x
+dy := bodies[j].y - bodies[i].y
+dz := bodies[j].z - bodies[i].z
+distance := math.Sqrt(dx*dx + dy*dy + dz*dz)
+force := G * bodies[j].mass / (distance * distance * distance)
+ax += force * dx
+ay += force * dy
+az += force * dz
+}
+}
+bodies[i].vx += ax * DT
+bodies[i].vy += ay * DT
+bodies[i].vz += az * DT
+}(i)
+}
+wg.Wait()
+
+for i := range bodies {
+wg.Add(1)
+go func(i int) {
+defer wg.Done()
+bodies[i].x += bodies[i].vx * DT
+bodies[i].y += bodies[i].vy * DT
+bodies[i].z += bodies[i].vz * DT
+}(i)
+}
+wg.Wait()
 }
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
-	bodies := initializeOrbitingBodies(NUM_BODIES, 1.989e30)
+bodies := make([]Body, NumBodies)
+initializeBodies(bodies)
 
-	initialKinetic, initialPotential := computeEnergy(bodies)
-	fmt.Printf("Initial Energy: %e\n", initialKinetic+initialPotential)
+initialEnergy := calculateEnergy(bodies)
+fmt.Printf("Initial energy: %e\n", initialEnergy)
 
-	for step := 0; step < STEPS; step++ {
-		updateVelocities(bodies)
-		updatePositions(bodies)
-	}
+for step := 0; step < 1000; step++ {
+kickStep(bodies)
+}
 
-	finalKinetic, finalPotential := computeEnergy(bodies)
-	fmt.Printf("Final Energy: %e\n", finalKinetic+finalPotential)
+finalEnergy := calculateEnergy(bodies)
+fmt.Printf("Final energy: %e\n", finalEnergy)
 }

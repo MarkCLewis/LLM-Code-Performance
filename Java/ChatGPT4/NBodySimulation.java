@@ -1,100 +1,149 @@
 import java.util.Random;
 
-class Body {
-    double[] position;
-    double[] velocity;
-    double mass;
-
-    public Body(double[] position, double[] velocity, double mass) {
-        this.position = position;
-        this.velocity = velocity;
-        this.mass = mass;
-    }
-}
-
 public class NBodySimulation {
-    private static final double G = 6.67430e-11;
-    private static final double DT = 1.0;
-    private static final int NUM_BODIES = 1_000_000;
-    private static final int STEPS = 1000;
 
-    private static double computeEnergy(Body[] bodies) {
-        double energy = 0.0;
-        for (int i = 0; i < bodies.length; i++) {
-            Body b1 = bodies[i];
-            energy += 0.5 * b1.mass * (b1.velocity[0] * b1.velocity[0] +
-                                       b1.velocity[1] * b1.velocity[1] +
-                                       b1.velocity[2] * b1.velocity[2]);
-            for (int j = i + 1; j < bodies.length; j++) {
-                Body b2 = bodies[j];
-                double dx = b1.position[0] - b2.position[0];
-                double dy = b1.position[1] - b2.position[1];
-                double dz = b1.position[2] - b2.position[2];
-                double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                energy -= G * b1.mass * b2.mass / dist;
+    static final int N_BODIES = 1_000_000;
+    static final int STEPS = 1000;
+    static final double G = 6.67430e-11;
+    static final double DT = 1.0;
+
+    static class Body {
+        double x, y, z;
+        double vx, vy, vz;
+        double ax, ay, az;
+        double mass;
+
+        public Body(double x, double y, double z, double vx, double vy, double vz, double mass) {
+            this.x = x; this.y = y; this.z = z;
+            this.vx = vx; this.vy = vy; this.vz = vz;
+            this.mass = mass;
+        }
+    }
+
+    static Body[] bodies;
+
+    public static void initializeSystem(int n) {
+        bodies = new Body[n + 1];
+        Random rand = new Random(42);
+
+        // Central body
+        double centralMass = 1e20;
+        bodies[0] = new Body(0, 0, 0, 0, 0, 0, centralMass);
+
+        double radius = 1e7;
+
+        for (int i = 1; i <= n; i++) {
+            double angle = 2 * Math.PI * i / n;
+            double r = radius * (1.0 + 0.1 * rand.nextDouble());
+
+            double x = r * Math.cos(angle);
+            double y = r * Math.sin(angle);
+            double z = 0;
+
+            double v = Math.sqrt(G * centralMass / r);
+            double vx = -v * Math.sin(angle);
+            double vy = v * Math.cos(angle);
+            double vz = 0;
+
+            bodies[i] = new Body(x, y, z, vx, vy, vz, 1.0);
+        }
+    }
+
+    public static void computeForces() {
+        for (Body b : bodies) {
+            b.ax = b.ay = b.az = 0;
+        }
+
+        int n = bodies.length;
+        for (int i = 0; i < n; i++) {
+            Body bi = bodies[i];
+            for (int j = i + 1; j < n; j++) {
+                Body bj = bodies[j];
+
+                double dx = bj.x - bi.x;
+                double dy = bj.y - bi.y;
+                double dz = bj.z - bi.z;
+
+                double distSqr = dx * dx + dy * dy + dz * dz + 1e-10;
+                double dist = Math.sqrt(distSqr);
+                double force = G / (distSqr * dist);
+
+                double fx = force * dx;
+                double fy = force * dy;
+                double fz = force * dz;
+
+                bi.ax += fx * bj.mass;
+                bi.ay += fy * bj.mass;
+                bi.az += fz * bj.mass;
+
+                bj.ax -= fx * bi.mass;
+                bj.ay -= fy * bi.mass;
+                bj.az -= fz * bi.mass;
             }
         }
-        return energy;
     }
 
-    private static void updateVelocities(Body[] bodies) {
-        for (int i = 0; i < bodies.length; i++) {
-            Body b1 = bodies[i];
-            double[] force = {0.0, 0.0, 0.0};
-            for (int j = 0; j < bodies.length; j++) {
-                if (i != j) {
-                    Body b2 = bodies[j];
-                    double dx = b2.position[0] - b1.position[0];
-                    double dy = b2.position[1] - b1.position[1];
-                    double dz = b2.position[2] - b1.position[2];
-                    double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                    double F = G * b1.mass * b2.mass / (dist * dist * dist);
-                    force[0] += F * dx;
-                    force[1] += F * dy;
-                    force[2] += F * dz;
-                }
+    public static void kickStep() {
+        for (Body b : bodies) {
+            b.vx += b.ax * DT;
+            b.vy += b.ay * DT;
+            b.vz += b.az * DT;
+
+            b.x += b.vx * DT;
+            b.y += b.vy * DT;
+            b.z += b.vz * DT;
+        }
+    }
+
+    public static double computeEnergy() {
+        double kinetic = 0.0;
+        double potential = 0.0;
+
+        for (Body b : bodies) {
+            double v2 = b.vx * b.vx + b.vy * b.vy + b.vz * b.vz;
+            kinetic += 0.5 * b.mass * v2;
+        }
+
+        int n = bodies.length;
+        for (int i = 0; i < n; i++) {
+            Body bi = bodies[i];
+            for (int j = i + 1; j < n; j++) {
+                Body bj = bodies[j];
+                double dx = bj.x - bi.x;
+                double dy = bj.y - bi.y;
+                double dz = bj.z - bi.z;
+                double dist = Math.sqrt(dx * dx + dy * dy + dz * dz + 1e-10);
+                potential -= G * bi.mass * bj.mass / dist;
             }
-            b1.velocity[0] += force[0] / b1.mass * DT;
-            b1.velocity[1] += force[1] / b1.mass * DT;
-            b1.velocity[2] += force[2] / b1.mass * DT;
         }
-    }
 
-    private static void updatePositions(Body[] bodies) {
-        for (Body body : bodies) {
-            body.position[0] += body.velocity[0] * DT;
-            body.position[1] += body.velocity[1] * DT;
-            body.position[2] += body.velocity[2] * DT;
-        }
-    }
-
-    private static Body[] initializeBodies(int numBodies, double centralMass) {
-        Body[] bodies = new Body[numBodies];
-        Random random = new Random();
-        bodies[0] = new Body(new double[]{0.0, 0.0, 0.0}, new double[]{0.0, 0.0, 0.0}, centralMass);
-        double radius = 1.0e9;
-        for (int i = 1; i < numBodies; i++) {
-            double angle = 2 * Math.PI * random.nextDouble();
-            double[] pos = {radius * Math.cos(angle), radius * Math.sin(angle), 0.0};
-            double speed = Math.sqrt(G * centralMass / radius);
-            double[] vel = {-speed * Math.sin(angle), speed * Math.cos(angle), 0.0};
-            bodies[i] = new Body(pos, vel, 1.0);
-        }
-        return bodies;
+        return kinetic + potential;
     }
 
     public static void main(String[] args) {
-        Body[] bodies = initializeBodies(NUM_BODIES, 1.989e30);
+        long start = System.currentTimeMillis();
+        System.out.println("Initializing...");
+        initializeSystem(N_BODIES);
 
-        double initialEnergy = computeEnergy(bodies);
-        System.out.printf("Initial Energy: %.6e\n", initialEnergy);
+        System.out.println("Computing initial energy...");
+        double initialEnergy = computeEnergy();
+        System.out.printf("Initial total energy: %.6e\n", initialEnergy);
 
         for (int step = 0; step < STEPS; step++) {
-            updateVelocities(bodies);
-            updatePositions(bodies);
+            computeForces();
+            kickStep();
+
+            if (step % 100 == 0) {
+                System.out.println("Step " + step + " complete");
+            }
         }
 
-        double finalEnergy = computeEnergy(bodies);
-        System.out.printf("Final Energy: %.6e\n", finalEnergy);
+        System.out.println("Computing final energy...");
+        double finalEnergy = computeEnergy();
+        System.out.printf("Final total energy: %.6e\n", finalEnergy);
+        System.out.printf("Energy difference: %.6e\n", Math.abs(finalEnergy - initialEnergy));
+
+        long end = System.currentTimeMillis();
+        System.out.printf("Simulation completed in %.2f seconds.\n", (end - start) / 1000.0);
     }
 }

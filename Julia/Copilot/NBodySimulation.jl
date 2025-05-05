@@ -1,106 +1,94 @@
-using Random
-
-const G = 6.67430e-11  # Gravitational constant
-const dt = 1e-3        # Time step
-const numBodies = 1000000  # Number of small bodies
+const G = 6.67430e-11 # Gravitational constant
+const DT = 1e-3 # Time step
+const NUM_BODIES = 1000000 # Number of bodies
 
 struct Body
+    x::Float64
+    y::Float64
+    z::Float64
+    vx::Float64
+    vy::Float64
+    vz::Float64
     mass::Float64
-    pos::Vector{Float64}
-    vel::Vector{Float64}
-    force::Vector{Float64}
 end
 
-function initializeBodies(n::Int)
-    bodies = Vector{Body}(undef, n + 1)
+function initialize_bodies()
+    bodies = Vector{Body}(undef, NUM_BODIES)
+    bodies[1] = Body(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1e30) # Central body mass
 
-    # Central body
-    bodies[1] = Body(1e30, [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
-
-    # Small bodies in circular orbits
-    for i in 2:n+1
-        radius = 1e11 * rand()
-        speed = sqrt(G * bodies[1].mass / radius)
-        angle = 2 * π * rand()
-
-        bodies[i] = Body(1e24,
-                         [radius * cos(angle), radius * sin(angle), 0.0],
-                         [-speed * sin(angle), speed * cos(angle), 0.0],
-                         [0.0, 0.0, 0.0])
+    for i in 2:NUM_BODIES
+        angle = 2 * π * (i - 1) / (NUM_BODIES - 1)
+        bodies[i] = Body(
+            cos(angle) * 1e11,
+            sin(angle) * 1e11,
+            0.0,
+            -sin(angle) * sqrt(G * bodies[1].mass / 1e11),
+            cos(angle) * sqrt(G * bodies[1].mass / 1e11),
+            0.0,
+            1e24 # Small body mass
+        )
     end
-
     return bodies
 end
 
-function simulateStep!(bodies::Vector{Body})
-    # Reset forces
+function calculate_energy(bodies)
+    energy = 0.0
     for body in bodies
-        body.force .= 0.0
-    end
-
-    # Calculate forces
-    for i in 1:length(bodies)
-        for j in i+1:length(bodies)
-            dx = bodies[j].pos[1] - bodies[i].pos[1]
-            dy = bodies[j].pos[2] - bodies[i].pos[2]
-            dz = bodies[j].pos[3] - bodies[i].pos[3]
-            dist = sqrt(dx*dx + dy*dy + dz*dz)
-            force = G * bodies[i].mass * bodies[j].mass / (dist * dist * dist)
-
-            bodies[i].force[1] += force * dx
-            bodies[i].force[2] += force * dy
-            bodies[i].force[3] += force * dz
-
-            bodies[j].force[1] -= force * dx
-            bodies[j].force[2] -= force * dy
-            bodies[j].force[3] -= force * dz
+        kinetic = 0.5 * body.mass * (body.vx^2 + body.vy^2 + body.vz^2)
+        potential = 0.0
+        for other in bodies
+            if body != other
+                dx = body.x - other.x
+                dy = body.y - other.y
+                dz = body.z - other.z
+                distance = sqrt(dx^2 + dy^2 + dz^2)
+                potential -= G * body.mass * other.mass / distance
+            end
         end
+        energy += kinetic + 0.5 * potential
     end
-
-    # Update velocities and positions
-    for body in bodies
-        body.vel .+= body.force ./ body.mass .* dt
-        body.pos .+= body.vel .* dt
-    end
+    return energy
 end
 
-function calculateEnergy(bodies::Vector{Body})
-    kineticEnergy = 0.0
-    potentialEnergy = 0.0
-
-    for i in 1:length(bodies)
-        kineticEnergy += 0.5 * bodies[i].mass * sum(bodies[i].vel .^ 2)
-
-        for j in i+1:length(bodies)
-            dx = bodies[j].pos[1] - bodies[i].pos[1]
-            dy = bodies[j].pos[2] - bodies[i].pos[2]
-            dz = bodies[j].pos[3] - bodies[i].pos[3]
-            dist = sqrt(dx*dx + dy*dy + dz*dz)
-            potentialEnergy -= G * bodies[i].mass * bodies[j].mass / dist
+function kick_step!(bodies)
+    for body in bodies
+        ax, ay, az = 0.0, 0.0, 0.0
+        for other in bodies
+            if body != other
+                dx = other.x - body.x
+                dy = other.y - body.y
+                dz = other.z - body.z
+                distance = sqrt(dx^2 + dy^2 + dz^2)
+                force = G * other.mass / (distance^3)
+                ax += force * dx
+                ay += force * dy
+                az += force * dz
+            end
         end
+        body.vx += ax * DT
+        body.vy += ay * DT
+        body.vz += az * DT
     end
 
-    return kineticEnergy + potentialEnergy
+    for body in bodies
+        body.x += body.vx * DT
+        body.y += body.vy * DT
+        body.z += body.vz * DT
+    end
 end
 
 function main()
-    Random.seed!(1234)
+    bodies = initialize_bodies()
 
-    # Initialize bodies
-    bodies = initializeBodies(numBodies)
+    initial_energy = calculate_energy(bodies)
+    println("Initial energy: $initial_energy")
 
-    # Calculate initial energy
-    initialEnergy = calculateEnergy(bodies)
-    println("Initial Energy: $initialEnergy")
-
-    # Run simulation for 1000 steps
     for step in 1:1000
-        simulateStep!(bodies)
+        kick_step!(bodies)
     end
 
-    # Calculate final energy
-    finalEnergy = calculateEnergy(bodies)
-    println("Final Energy: $finalEnergy")
+    final_energy = calculate_energy(bodies)
+    println("Final energy: $final_energy")
 end
 
 main()

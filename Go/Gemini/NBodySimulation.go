@@ -7,132 +7,175 @@ import (
 	"time"
 )
 
-const (
-	G       = 6.67430e-11
-	DT      = 1.0
-	N       = 1000000
-	STEPS   = 1000
-	CENTERM = 1e20
-)
-
+// Body represents a celestial body with mass, position, and velocity.
 type Body struct {
-	X, Y, Z    float64
-	VX, VY, VZ float64
-	AX, AY, AZ float64
-	Mass       float64
+	Mass     float64
+	Position [3]float64
+	Velocity [3]float64
 }
 
-var bodies []Body
+// System represents a collection of celestial bodies.
+type System struct {
+	Bodies []Body
+}
 
-func initializeSystem(n int) {
-	bodies = make([]Body, n+1)
+// GravitationalConstant is the universal gravitational constant.
+const GravitationalConstant = 6.67430e-11
 
-	// Central body
-	bodies[0] = Body{
-		X: 0, Y: 0, Z: 0,
-		VX: 0, VY: 0, VZ: 0,
-		Mass: CENTERM,
+// distanceSquared calculates the squared Euclidean distance between two bodies.
+func distanceSquared(b1, b2 *Body) float64 {
+	dx := b1.Position[0] - b2.Position[0]
+	dy := b1.Position[1] - b2.Position[1]
+	dz := b1.Position[2] - b2.Position[2]
+	return dx*dx + dy*dy + dz*dz
+}
+
+// calculateForce calculates the gravitational force on body i due to body j.
+func calculateForce(bodyI, bodyJ *Body, force *[3]float64) {
+	rSq := distanceSquared(bodyI, bodyJ)
+	if rSq > 1e-9 { // Avoid division by zero for very close bodies
+		r := math.Sqrt(rSq)
+		magnitude := (GravitationalConstant * bodyI.Mass * bodyJ.Mass) / rSq
+		force[0] += magnitude * (bodyJ.Position[0] - bodyI.Position[0]) / r
+		force[1] += magnitude * (bodyJ.Position[1] - bodyI.Position[1]) / r
+		force[2] += magnitude * (bodyJ.Position[2] - bodyI.Position[2]) / r
 	}
+}
 
-	radius := 1e7
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+// calculateTotalEnergy calculates the total energy of the system.
+func calculateTotalEnergy(s *System) float64 {
+	kineticEnergy := 0.0
+	potentialEnergy := 0.0
 
-	for i := 1; i <= n; i++ {
-		angle := 2 * math.Pi * float64(i) / float64(n)
-		r := radius * (1.0 + 0.1*rng.Float64())
+	for i := range s.Bodies {
+		// Kinetic energy
+		vSq := s.Bodies[i].Velocity[0]*s.Bodies[i].Velocity[0] +
+			s.Bodies[i].Velocity[1]*s.Bodies[i].Velocity[1] +
+			s.Bodies[i].Velocity[2]*s.Bodies[i].Velocity[2]
+		kineticEnergy += 0.5 * s.Bodies[i].Mass * vSq
 
-		x := r * math.Cos(angle)
-		y := r * math.Sin(angle)
-		v := math.Sqrt(G * CENTERM / r)
-
-		bodies[i] = Body{
-			X:    x,
-			Y:    y,
-			Z:    0,
-			VX:   -v * math.Sin(angle),
-			VY:   v * math.Cos(angle),
-			VZ:   0,
-			Mass: 1.0,
+		// Potential energy
+		for j := i + 1; j < len(s.Bodies); j++ {
+			r := math.Sqrt(distanceSquared(&s.Bodies[i], &s.Bodies[j]))
+			potentialEnergy -= (GravitationalConstant * s.Bodies[i].Mass * s.Bodies[j].Mass) / r
 		}
 	}
+
+	return kineticEnergy + potentialEnergy
 }
 
-func computeForces(n int) {
-	for i := 0; i <= n; i++ {
-		bodies[i].AX, bodies[i].AY, bodies[i].AZ = 0, 0, 0
+// initializeCircularOrbits initializes a system with a central body and orbiting smaller bodies.
+func initializeCircularOrbits(numOrbiting int, centralMass, orbitRadius, orbitingMass float64) *System {
+	system := &System{
+		Bodies: make([]Body, numOrbiting+1),
+	}
 
-		for j := 0; j <= n; j++ {
-			if i == j {
-				continue
+	// Initialize the central body
+	system.Bodies[0] = Body{
+		Mass:     centralMass,
+		Position: [3]float64{0, 0, 0},
+		Velocity: [3]float64{0, 0, 0},
+	}
+
+	// Initialize the orbiting bodies
+	for i := 0; i < numOrbiting; i++ {
+		angle := 2 * math.Pi * float64(i) / float64(numOrbiting)
+		system.Bodies[i+1] = Body{
+			Mass: orbitingMass,
+			Position: [3]float64{
+				orbitRadius * math.Cos(angle),
+				orbitRadius * math.Sin(angle),
+				0,
+			},
+		}
+
+		// Calculate the orbital velocity for a circular orbit
+		orbitalSpeed := math.Sqrt(GravitationalConstant * centralMass / orbitRadius)
+		system.Bodies[i+1].Velocity = [3]float64{
+			-orbitalSpeed * math.Sin(angle),
+			orbitalSpeed * math.Cos(angle),
+			0,
+		}
+	}
+
+	return system
+}
+
+// kickStep performs the "kick" part of the first-order kick-step method.
+func kickStep(s *System, dt float64) {
+	numBodies := len(s.Bodies)
+	forces := make([][3]float64, numBodies)
+
+	// Calculate forces
+	for i := 0; i < numBodies; i++ {
+		for j := 0; j < numBodies; j++ {
+			if i != j {
+				calculateForce(&s.Bodies[i], &s.Bodies[j], &forces[i])
 			}
-			dx := bodies[j].X - bodies[i].X
-			dy := bodies[j].Y - bodies[i].Y
-			dz := bodies[j].Z - bodies[i].Z
-			distSq := dx*dx + dy*dy + dz*dz + 1e-10
-			dist := math.Sqrt(distSq)
-			force := G * bodies[j].Mass / (distSq * dist)
-
-			bodies[i].AX += dx * force
-			bodies[i].AY += dy * force
-			bodies[i].AZ += dz * force
 		}
+	}
+
+	// Update velocities
+	for i := 0; i < numBodies; i++ {
+		s.Bodies[i].Velocity[0] += (forces[i][0] / s.Bodies[i].Mass) * dt * 0.5
+		s.Bodies[i].Velocity[1] += (forces[i][1] / s.Bodies[i].Mass) * dt * 0.5
+		s.Bodies[i].Velocity[2] += (forces[i][2] / s.Bodies[i].Mass) * dt * 0.5
 	}
 }
 
-func kickStep(n int) {
-	computeForces(n)
-	for i := 0; i <= n; i++ {
-		b := &bodies[i]
-		b.VX += b.AX * DT
-		b.VY += b.AY * DT
-		b.VZ += b.AZ * DT
-
-		b.X += b.VX * DT
-		b.Y += b.VY * DT
-		b.Z += b.VZ * DT
+// driftStep performs the "drift" part of the first-order kick-step method.
+func driftStep(s *System, dt float64) {
+	for i := range s.Bodies {
+		s.Bodies[i].Position[0] += s.Bodies[i].Velocity[0] * dt
+		s.Bodies[i].Position[1] += s.Bodies[i].Velocity[1] * dt
+		s.Bodies[i].Position[2] += s.Bodies[i].Velocity[2] * dt
 	}
 }
 
-func calculateEnergy(n int) float64 {
-	kinetic, potential := 0.0, 0.0
-
-	for i := 0; i <= n; i++ {
-		v2 := bodies[i].VX*bodies[i].VX + bodies[i].VY*bodies[i].VY + bodies[i].VZ*bodies[i].VZ
-		kinetic += 0.5 * bodies[i].Mass * v2
-	}
-
-	for i := 0; i <= n; i++ {
-		for j := i + 1; j <= n; j++ {
-			dx := bodies[i].X - bodies[j].X
-			dy := bodies[i].Y - bodies[j].Y
-			dz := bodies[i].Z - bodies[j].Z
-			dist := math.Sqrt(dx*dx + dy*dy + dz*dz + 1e-10)
-			potential -= G * bodies[i].Mass * bodies[j].Mass / dist
-		}
-	}
-	return kinetic + potential
+// firstOrderKickStep performs one full first-order kick-step.
+func firstOrderKickStep(s *System, dt float64) {
+	kickStep(s, dt)
+	driftStep(s, dt)
+	kickStep(s, dt)
 }
 
 func main() {
-	start := time.Now()
-	fmt.Println("Initializing system...")
-	initializeSystem(N)
+	numOrbitingBodies := 1000000
+	centralMass := 1.989e30    // Mass of the Sun (kg)
+	orbitRadius := 1.496e11    // 1 AU (m)
+	orbitingMass := 5.972e24   // Mass of the Earth (kg)
+	numSteps := 1000
+	timeStep := 3600.0 * 24.0 * 7.0 // 1 week in seconds
 
-	fmt.Println("Calculating initial energy...")
-	initialEnergy := calculateEnergy(N)
-	fmt.Printf("Initial total energy: %.6e\n", initialEnergy)
+	rand.Seed(time.Now().UnixNano())
 
-	for step := 0; step < STEPS; step++ {
-		kickStep(N)
-		if step%100 == 0 {
-			fmt.Printf("Step %d complete\n", step)
+	// Initialize the system
+	system := initializeCircularOrbits(numOrbitingBodies, centralMass, orbitRadius, orbitingMass)
+	fmt.Printf("Initial number of bodies: %d\n", len(system.Bodies))
+
+	// Calculate initial energy
+	initialEnergy := calculateTotalEnergy(system)
+	fmt.Printf("Initial total energy: %e J\n", initialEnergy)
+
+	// Run the simulation
+	fmt.Printf("Running simulation for %d steps...\n", numSteps)
+	startTime := time.Now()
+	for step := 0; step < numSteps; step++ {
+		firstOrderKickStep(system, timeStep)
+		if (step+1)%100 == 0 {
+			fmt.Printf("Step %d completed.\n", step+1)
 		}
 	}
+	elapsedTime := time.Since(startTime)
+	fmt.Printf("Simulation finished in %s.\n", elapsedTime)
 
-	fmt.Println("Calculating final energy...")
-	finalEnergy := calculateEnergy(N)
-	fmt.Printf("Final total energy: %.6e\n", finalEnergy)
-	fmt.Printf("Energy difference:  %.6e\n", math.Abs(finalEnergy-initialEnergy))
+	// Calculate final energy
+	finalEnergy := calculateTotalEnergy(system)
+	fmt.Printf("Final total energy: %e J\n", finalEnergy)
 
-	fmt.Printf("Simulation completed in %.2f seconds.\n", time.Since(start).Seconds())
+	// Calculate the energy difference
+	energyDifference := math.Abs(finalEnergy - initialEnergy)
+	relativeEnergyDifference := energyDifference / math.Abs(initialEnergy)
+	fmt.Printf("Absolute energy difference: %e J\n", energyDifference)
+	fmt.Printf("Relative energy difference: %e\n", relativeEnergyDifference)
 }

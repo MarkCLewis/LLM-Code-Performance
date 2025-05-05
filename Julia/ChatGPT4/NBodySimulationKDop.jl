@@ -1,108 +1,146 @@
-using Random, Printf, Base.Threads
+using Base.Threads
+using StaticArrays
+using Printf
 
-const G = 6.67430e-11  # Gravitational constant
-const DT = 1.0         # Time step
-const NUM_BODIES = 1_000_000  # Number of bodies
-const STEPS = 1000     # Simulation steps
-const THETA = 0.3      # Barnes-Hut approximation threshold
+const G = 6.67430e-11
+const DT = 1.0
+const THETA = 0.3
+const EPS2 = 1e-10
+const N_BODIES = 1_000_000
+const STEPS = 1000
+
+typealias Vec3 SVector{3, Float64}
 
 mutable struct Body
-    position::Vector{Float64}
-    velocity::Vector{Float64}
+    pos::Vec3
+    vel::Vec3
+    acc::Vec3
     mass::Float64
 end
 
-mutable struct KDTree
-    center_of_mass::Vector{Float64}
-    total_mass::Float64
-    boundary_min::Vector{Float64}
-    boundary_max::Vector{Float64}
-    children::Vector{Union{Nothing, KDTree}}
-    body::Union{Nothing, Body}
+mutable struct KDNode
+    min::Vec3
+    max::Vec3
+    cm::Vec3
+    mass::Float64
+    left::Union{KDNode, Nothing}
+    right::Union{KDNode, Nothing}
+    bodies::Vector{Body}
 end
 
-function build_kdtree(bodies::Vector{Body})::Union{Nothing, KDTree}
-    if isempty(bodies)
-        return nothing
-    end
-    if length(bodies) == 1
-        return KDTree(bodies[1].position, bodies[1].mass, bodies[1].position, bodies[1].position, fill(nothing, 8), bodies[1])
-    end
-    
-    total_mass = sum(b.mass for b in bodies)
-    center_of_mass = sum(b.position .* b.mass for b in bodies) / total_mass
-    boundary_min = minimum(reduce(hcat, (b.position for b in bodies)), dims=2)
-    boundary_max = maximum(reduce(hcat, (b.position for b in bodies)), dims=2)
-    
-    node = KDTree(center_of_mass, total_mass, boundary_min, boundary_max, fill(nothing, 8), nothing)
-    
-    sorted_bodies = sort(bodies, by=b -> b.position)
-    median_idx = length(sorted_bodies) ÷ 2
-    left_bodies = sorted_bodies[1:median_idx]
-    right_bodies = sorted_bodies[median_idx+1:end]
-    
-    node.children[1] = build_kdtree(left_bodies)
-    node.children[2] = build_kdtree(right_bodies)
-    
-    return node
-end
+function initialize_system(n::Int)
+    bodies = Vector{Body}(undef, n + 1)
+    bodies[1] = Body(SVector(0.0, 0.0, 0.0), SVector(0.0, 0.0, 0.0), SVector(0.0, 0.0, 0.0), 1e20)
+    radius = 1e7
+    rng = MersenneTwister(42)
 
-function compute_force(body::Body, tree::KDTree, theta::Float64)
-    if tree === nothing || tree.body === body
-        return zeros(3)
-    end
-    r_vec = tree.center_of_mass - body.position
-    r = norm(r_vec)
-    s = maximum(tree.boundary_max - tree.boundary_min)
-    if s / r < theta || tree.body !== nothing
-        return G * tree.total_mass / r^3 * r_vec
-    else
-        force = zeros(3)
-        for child in tree.children
-            if child !== nothing
-                force .+= compute_force(body, child, theta)
-            end
-        end
-        return force
-    end
-end
-
-function update_velocities(bodies::Vector{Body}, tree::KDTree)
-    @threads for body in bodies
-        force = compute_force(body, tree, THETA)
-        body.velocity .+= force .* DT
-    end
-end
-
-function initialize_orbiting_bodies(num_bodies::Int, central_mass::Float64)
-    bodies = Vector{Body}(undef, num_bodies)
-    bodies[1] = Body([0.0, 0.0, 0.0], [0.0, 0.0, 0.0], central_mass)
-    radius = 1.0e9
-    @threads for i in 2:num_bodies
-        angle = 2π * rand()
-        pos = [radius * cos(angle), radius * sin(angle), 0.0]
-        speed = sqrt(G * central_mass / radius)
-        vel = [-speed * sin(angle), speed * cos(angle), 0.0]
-        bodies[i] = Body(pos, vel, 1.0)
+    Threads.@threads for i in 2:n+1
+        angle = 2 * pi * i / n
+        r = radius * (1.0 + 0.1 * rand(rng))
+        x = r * cos(angle)
+        y = r * sin(angle)
+        z = 0.0
+        v = sqrt(G * bodies[1].mass / r)
+        vx = -v * sin(angle)
+        vy = v * cos(angle)
+        vz = 0.0
+        bodies[i] = Body(SVector(x, y, z), SVector(vx, vy, vz), SVector(0.0, 0.0, 0.0), 1.0)
     end
     return bodies
 end
 
+function build_kdtree(bodies::Vector{Body}, depth::Int = 0)::Union{KDNode, Nothing}
+    if isempty(bodies)
+        return nothing
+    end
+
+    axis = depth % 3 + 1
+    sort!(bodies, by = b -> b.pos[axis])
+    mid = length(bodies) ÷ 2
+    node_bodies = bodies
+
+    min_coords = minimum(reduce(hcat, [b.pos for b in node_bodies]), dims=2)[:, 1]
+    max_coords = maximum(reduce(hcat, [b.pos for b in node_bodies]), dims=2)[:, 1]
+    total_mass = sum(b.mass for b in node_bodies)
+    cm = sum(b.mass .* b.pos for b in node_bodies) / total_mass
+
+    left = build_kdtree(view(node_bodies, 1:mid-1), depth + 1)
+    right = build_kdtree(view(node_bodies, mid:end), depth + 1)
+
+    return KDNode(SVector(min_coords...), SVector(max_coords...), cm, total_mass, left, right, node_bodies)
+end
+
+function compute_force!(b::Body, node::Union{KDNode, Nothing})
+    if node === nothing || node.mass == 0.0 || b in node.bodies
+        return
+    end
+
+    dx = node.cm - b.pos
+    dist2 = sum(dx .^ 2) + EPS2
+    size = maximum(node.max .- node.min)
+
+    if length(node.bodies) <= 1 || (size^2 / dist2 < THETA^2)
+        dist = sqrt(dist2)
+        force = G * node.mass / (dist2 * dist)
+        b.acc += force * dx
+    else
+        compute_force!(b, node.left)
+        compute_force!(b, node.right)
+    end
+end
+
+function compute_forces!(bodies::Vector{Body}, tree::KDNode)
+    Threads.@threads for i in eachindex(bodies)
+        b = bodies[i]
+        b.acc = SVector(0.0, 0.0, 0.0)
+        compute_force!(b, tree)
+    end
+end
+
+function update_bodies!(bodies::Vector{Body})
+    Threads.@threads for i in eachindex(bodies)
+        b = bodies[i]
+        b.vel += b.acc * DT
+        b.pos += b.vel * DT
+    end
+end
+
+function compute_energy(bodies::Vector{Body})
+    kinetic = ThreadsX.sum(b -> 0.5 * b.mass * sum(b.vel .^ 2), bodies)
+    potential = ThreadsX.sum(1:length(bodies)) do i
+        pot = 0.0
+        bi = bodies[i]
+        for j in i+1:length(bodies)
+            bj = bodies[j]
+            dx = bi.pos - bj.pos
+            dist = sqrt(sum(dx .^ 2) + EPS2)
+            pot -= G * bi.mass * bj.mass / dist
+        end
+        pot
+    end
+    return kinetic + potential
+end
+
 function main()
-    Random.seed!(1234)
-    bodies = initialize_orbiting_bodies(NUM_BODIES, 1.989e30)
-    
+    println("Initializing...")
+    bodies = initialize_system(N_BODIES)
+    println("Calculating initial energy...")
     initial_energy = compute_energy(bodies)
-    @printf("Initial Energy: %e\n", initial_energy)
-    
+    @printf("Initial energy: %.6e\n", initial_energy)
+
     for step in 1:STEPS
         tree = build_kdtree(bodies)
-        update_velocities(bodies, tree)
-        update_positions(bodies)
+        compute_forces!(bodies, tree)
+        update_bodies!(bodies)
+        if step % 100 == 0
+            println("Step $step")
+        end
     end
-    
+
+    println("Calculating final energy...")
     final_energy = compute_energy(bodies)
-    @printf("Final Energy: %e\n", final_energy)
+    @printf("Final energy: %.6e\n", final_energy)
+    @printf("Energy difference: %.6e\n", abs(final_energy - initial_energy))
 end
 
 main()

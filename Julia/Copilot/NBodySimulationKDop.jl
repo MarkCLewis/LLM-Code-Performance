@@ -1,213 +1,153 @@
-using Random
 using Base.Threads
 
-const G = 6.67430e-11  # Gravitational constant
-const dt = 1e-3        # Time step
-const numBodies = 1000000  # Number of small bodies
-const theta = 0.3      # Barnes-Hut approximation parameter
+const G = 6.67430e-11 # Gravitational constant
+const DT = 1e-3 # Time step
+const NUM_BODIES = 1000000 # Number of bodies
+const THETA = 0.3 # Theta value for approximation
 
 struct Body
+    x::Float64
+    y::Float64
+    z::Float64
+    vx::Float64
+    vy::Float64
+    vz::Float64
     mass::Float64
-    pos::Vector{Float64}
-    vel::Vector{Float64}
-    force::Vector{Float64}
 end
 
-mutable struct Node
-    body::Union{Body, Nothing}
-    center::Vector{Float64}
-    size::Float64
-    mass::Float64
-    com::Vector{Float64}
-    children::Vector{Union{Node, Nothing}}
-
-    Node(center, size) = new(nothing, center, size, 0.0, [0.0, 0.0, 0.0], Vector{Union{Node, Nothing}}(undef, 8))
+struct KDNode
+    body::Body
+    left::Union{KDNode, Nothing}
+    right::Union{KDNode, Nothing}
+    min::Vector{Float64}
+    max::Vector{Float64}
 end
 
-mutable struct NodePool
-    pool::Vector{Node}
-    index::Int
+function initialize_bodies()
+    bodies = Vector{Body}(undef, NUM_BODIES)
+    bodies[1] = Body(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1e30) # Central body mass
 
-    NodePool(size::Int) = new(Vector{Node}(undef, size), 1)
-
-    function allocate!(pool::NodePool, center::Vector{Float64}, size::Float64)
-        if pool.index > length(pool.pool)
-            push!(pool.pool, Node(center, size))
-        else
-            pool.pool[pool.index] = Node(center, size)
-        end
-        pool.index += 1
-        return pool.pool[pool.index - 1]
+    for i in 2:NUM_BODIES
+        angle = 2 * π * (i - 1) / (NUM_BODIES - 1)
+        bodies[i] = Body(
+            cos(angle) * 1e11,
+            sin(angle) * 1e11,
+            0.0,
+            -sin(angle) * sqrt(G * bodies[1].mass / 1e11),
+            cos(angle) * sqrt(G * bodies[1].mass / 1e11),
+            0.0,
+            1e24 # Small body mass
+        )
     end
-
-    function reset!(pool::NodePool)
-        pool.index = 1
-    end
-end
-
-function initializeBodies(n::Int)
-    bodies = Vector{Body}(undef, n + 1)
-
-    # Central body
-    bodies[1] = Body(1e30, [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
-
-    # Small bodies in circular orbits
-    for i in 2:n+1
-        radius = 1e11 * rand()
-        speed = sqrt(G * bodies[1].mass / radius)
-        angle = 2 * π * rand()
-
-        bodies[i] = Body(1e24,
-                         [radius * cos(angle), radius * sin(angle), 0.0],
-                         [-speed * sin(angle), speed * cos(angle), 0.0],
-                         [0.0, 0.0, 0.0])
-    end
-
     return bodies
 end
 
-function buildTree(bodies::Vector{Body}, pool::NodePool)
-    root = allocate!(pool, [0.0, 0.0, 0.0], 2 * 1e11)
-    @threads for body in bodies
-        insertBody!(root, body, pool)
+function calculate_energy(bodies)
+    energy = Ref(0.0)
+    @threads for i in 1:length(bodies)
+        body = bodies[i]
+        kinetic = 0.5 * body.mass * (body.vx^2 + body.vy^2 + body.vz^2)
+        potential = 0.0
+        for j in 1:length(bodies)
+            other = bodies[j]
+            if body != other
+                dx = body.x - other.x
+                dy = body.y - other.y
+                dz = body.z - other.z
+                distance = sqrt(dx^2 + dy^2 + dz^2)
+                potential -= G * body.mass * other.mass / distance
+            end
+        end
+        @atomic energy[] += kinetic + 0.5 * potential
     end
-    return root
+    return energy[]
 end
 
-function insertBody!(node::Node, body::Body, pool::NodePool)
-    if node.body === nothing && node.mass == 0.0
-        node.body = body
-        node.mass = body.mass
-        node.com = copy(body.pos)
-        return
+function build_kdtree(bodies, depth=0)
+    if isempty(bodies)
+        return nothing
     end
 
-    if node.body !== nothing
-        oldBody = node.body
-        node.body = nothing
-        insertBody!(node, oldBody, pool)
-    end
+    axis = depth % 3 + 1
+    sort!(bodies, by=b -> getfield(b, (:x, :y, :z)[axis]))
 
-    node.mass += body.mass
+    median = length(bodies) ÷ 2
+    node = KDNode(
+        bodies[median],
+        build_kdtree(bodies[1:median-1], depth + 1),
+        build_kdtree(bodies[median+1:end], depth + 1),
+        [bodies[median].x, bodies[median].y, bodies[median].z],
+        [bodies[median].x, bodies[median].y, bodies[median].z]
+    )
+
     for i in 1:3
-        node.com[i] = (node.com[i] * (node.mass - body.mass) + body.pos[i] * body.mass) / node.mass
-    end
-
-    index = 0
-    for i in 1:3
-        if body.pos[i] > node.center[i]
-            index |= 1 << (i - 1)
+        if node.left != nothing
+            node.min[i] = min(node.min[i], node.left.min[i])
+            node.max[i] = max(node.max[i], node.left.max[i])
+        end
+        if node.right != nothing
+            node.min[i] = min(node.min[i], node.right.min[i])
+            node.max[i] = max(node.max[i], node.right.max[i])
         end
     end
 
-    if node.children[index] === nothing
-        newCenter = copy(node.center)
-        for i in 1:3
-            newCenter[i] += (index & (1 << (i - 1)) != 0 ? 1 : -1) * node.size / 4
-        end
-        node.children[index] = allocate!(pool, newCenter, node.size / 2)
-    end
-
-    insertBody!(node.children[index], body, pool)
+    return node
 end
 
-function calculateForce!(body::Body, node::Node)
-    if node.body !== nothing && node.body !== body
-        dx = node.body.pos[1] - body.pos[1]
-        dy = node.body.pos[2] - body.pos[2]
-        dz = node.body.pos[3] - body.pos[3]
-        dist = sqrt(dx*dx + dy*dy + dz*dz)
-        force = G * body.mass * node.body.mass / (dist * dist * dist)
-
-        body.force[1] += force * dx
-        body.force[2] += force * dy
-        body.force[3] += force * dz
+function calculate_force(node, body, ax, ay, az)
+    if node == nothing || node.body == nothing
         return
     end
 
-    dx = node.com[1] - body.pos[1]
-    dy = node.com[2] - body.pos[2]
-    dz = node.com[3] - body.pos[3]
-    dist = sqrt(dx*dx + dy*dy + dz*dz)
+    dx = node.body.x - body.x
+    dy = node.body.y - body.y
+    dz = node.body.z - body.z
+    distance = sqrt(dx^2 + dy^2 + dz^2)
 
-    if node.size / dist < theta
-        force = G * body.mass * node.mass / (dist * dist * dist)
+    size = max(node.max[1] - node.min[1], max(node.max[2] - node.min[2], node.max[3] - node.min[3]))
 
-        body.force[1] += force * dx
-        body.force[2] += force * dy
-        body.force[3] += force * dz
-        return
-    end
-
-    for child in node.children
-        if child !== nothing
-            calculateForce!(body, child)
-        end
+    if size / distance < THETA || (node.left == nothing && node.right == nothing)
+        force = G * node.body.mass / (distance^3)
+        ax[] += force * dx
+        ay[] += force * dy
+        az[] += force * dz
+    else
+        calculate_force(node.left, body, ax, ay, az)
+        calculate_force(node.right, body, ax, ay, az)
     end
 end
 
-function simulateStep!(bodies::Vector{Body}, pool::NodePool)
-    # Reset forces
+function kick_step!(bodies, root)
     @threads for i in 1:length(bodies)
-        bodies[i].force .= 0.0
+        body = bodies[i]
+        ax, ay, az = Ref(0.0), Ref(0.0), Ref(0.0)
+        calculate_force(root, body, ax, ay, az)
+        body.vx += ax[] * DT
+        body.vy += ay[] * DT
+        body.vz += az[] * DT
     end
 
-    # Build kD-tree
-    reset!(pool)
-    root = buildTree(bodies, pool)
-
-    # Calculate forces using kD-tree
     @threads for i in 1:length(bodies)
-        calculateForce!(bodies[i], root)
+        body = bodies[i]
+        body.x += body.vx * DT
+        body.y += body.vy * DT
+        body.z += body.vz * DT
     end
-
-    # Update velocities and positions
-    @threads for i in 1:length(bodies)
-        bodies[i].vel .+= bodies[i].force ./ bodies[i].mass .* dt
-        bodies[i].pos .+= bodies[i].vel .* dt
-    end
-end
-
-function calculateEnergy(bodies::Vector{Body})
-    kineticEnergy = 0.0
-    potentialEnergy = 0.0
-
-    @threads for i in 1:length(bodies)
-        kineticEnergy += 0.5 * bodies[i].mass * sum(bodies[i].vel .^ 2)
-
-        for j in i+1:length(bodies)
-            dx = bodies[j].pos[1] - bodies[i].pos[1]
-            dy = bodies[j].pos[2] - bodies[i].pos[2]
-            dz = bodies[j].pos[3] - bodies[i].pos[3]
-            dist = sqrt(dx*dx + dy*dy + dz*dz)
-            potentialEnergy -= G * bodies[i].mass * bodies[j].mass / dist
-        end
-    end
-
-    return kineticEnergy + potentialEnergy
 end
 
 function main()
-    Random.seed!(1234)
+    bodies = initialize_bodies()
 
-    # Initialize bodies
-    bodies = initializeBodies(numBodies)
+    initial_energy = calculate_energy(bodies)
+    println("Initial energy: $initial_energy")
 
-    # Create a node pool
-    pool = NodePool(numBodies)
-
-    # Calculate initial energy
-    initialEnergy = calculateEnergy(bodies)
-    println("Initial Energy: $initialEnergy")
-
-    # Run simulation for 1000 steps
     for step in 1:1000
-        simulateStep!(bodies, pool)
+        root = build_kdtree(bodies)
+        kick_step!(bodies, root)
     end
 
-    # Calculate final energy
-    finalEnergy = calculateEnergy(bodies)
-    println("Final Energy: $finalEnergy")
+    final_energy = calculate_energy(bodies)
+    println("Final energy: $final_energy")
 end
 
 main()

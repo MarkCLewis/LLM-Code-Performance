@@ -1,199 +1,161 @@
-import java.util.Arrays;
-import java.util.Random;
-
-class Body {
-    double mass;
-    double[] pos = new double[3];
-    double[] vel = new double[3];
-    double[] force = new double[3];
-
-    public Body(double mass, double[] pos, double[] vel) {
-        this.mass = mass;
-        this.pos = pos;
-        this.vel = vel;
-    }
-}
-
-class Node {
-    Body body;
-    double[] center = new double[3];
-    double size;
-    double mass;
-    double[] com = new double[3];
-    Node[] children = new Node[8];
-
-    public Node() {
-        this.mass = 0;
-    }
-}
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.RecursiveTask;
+import java.util.concurrent.ForkJoinPool;
+import java.util.stream.IntStream;
 
 public class NBodySimulation {
     private static final double G = 6.67430e-11; // Gravitational constant
-    private static final double dt = 1e-3;       // Time step
-    private static final int numBodies = 1000000; // Number of small bodies
-    private static final double theta = 0.3;     // Barnes-Hut approximation parameter
+    private static final double DT = 1e-3; // Time step
+    private static final int NUM_BODIES = 1000000; // Number of bodies
+    private static final double THETA = 0.3; // Theta value for approximation
+
+    static class Body {
+        double x, y, z;
+        double vx, vy, vz;
+        double mass;
+
+        Body(double x, double y, double z, double vx, double vy, double vz, double mass) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.vx = vx;
+            this.vy = vy;
+            this.vz = vz;
+            this.mass = mass;
+           }
+
+    static class KDNode {
+        Body body;
+        KDNode left, right;
+        double[] min = new double[3];
+        double[] max = new double[3];
+
+        KDNode(Body body) {
+            this.body = body;
+        }
+    }
+
+    private static void initializeBodies(List<Body> bodies) {
+        bodies.add(new Body(0, 0, 0, 0, 0, 0, 1e30)); // Central body mass
+
+        IntStream.range(1, NUM_BODIES).parallel().forEach(i -> {
+            double angle = 2 * Math.PI * i / (NUM_BODIES - 1);
+            bodies.add(new Body(
+                Math.cos(angle) * 1e11,
+                Math.sin(angle) * 1e11,
+                0,
+                -Math.sin(angle) * Math.sqrt(G * bodies.get(0).mass / 1e11),
+                Math.cos(angle) * Math.sqrt(G * bodies.get(0).mass / 1e11),
+                0,
+                1e24 // Small body mass
+            ));
+        });
+    }
+
+    private static double calculateEnergy(List<Body> bodies) {
+        return bodies.parallelStream().mapToDouble(body -> {
+            double kinetic = 0.5 * body.mass * (body.vx * body.vx + body.vy * body.vy + body.vz * body.vz);
+            double potential = bodies.stream().filter(other -> body != other).mapToDouble(other -> {
+                double dx = body.x - other.x;
+                double dy = body.y - other.y;
+                double dz = body.z - other.z;
+                double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                return -G * body.mass * other.mass / distance;
+            }).sum();
+            return kinetic + 0.5 * potential;
+        }).sum();
+    }
+
+    private static KDNode buildKDTree(List<Body> bodies, int depth) {
+        if (bodies.isEmpty()) return null;
+
+        int axis = depth % 3;
+        bodies.sort((a, b) -> {
+            switch (axis) {
+                case 0: return Double.compare(a.x, b.x);
+                case 1: return Double.compare(a.y, b.y);
+                default: return Double.compare(a.z, b.z);
+            }
+        });
+
+        int median = bodies.size() / 2;
+        KDNode node = new KDNode(bodies.get(median));
+        node.left = buildKDTree(bodies.subList(0, median), depth + 1);
+        node.right = buildKDTree(bodies.subList(median + 1, bodies.size()), depth + 1);
+
+        for (int i = 0; i < 3; i++) {
+            node.min[i] = node.max[i] = node.body.x;
+            if (node.left != null) {
+                node.min[i] = Math.min(node.min[i], node.left.min[i]);
+                node.max[i] = Math.max(node.max[i], node.left.max[i]);
+            }
+            if (node.right != null) {
+                node.min[i] = Math.min(node.min[i], node.right.min[i]);
+                node.max[i] = Math.max(node.max[i], node.right.max[i]);
+            }
+        }
+
+        return node;
+    }
+
+    private static void calculateForce(KDNode node, Body body, double[] acceleration) {
+        if (node == null || node.body == null) return;
+
+        double dx = node.body.x - body.x;
+        double dy = node.body.y - body.y;
+        double dz = node.body.z - body.z;
+        double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+        double size = Math.max(node.max[0] - node.min[0], Math.max(node.max[1] - node.min[1], node.max[2] - node.min[2]));
+
+        if (size / distance < THETA || (node.left == null && node.right == null)) {
+            double force = G * node.body.mass / (distance * distance * distance);
+            acceleration[0] += force * dx;
+            acceleration[1] += force * dy;
+            acceleration[2] += force * dz;
+        } else {
+            calculateForce(node.left, body, acceleration);
+            calculateForce(node.right, body, acceleration);
+        }
+    }
+
+    private static void kickStep(List<Body> bodies, KDNode root) {
+        ForkJoinPool.commonPool().invoke(new RecursiveTask<Void>() {
+            @Override
+            protected Void compute() {
+                bodies.parallelStream().forEach(body -> {
+                    double[] acceleration = new double[3];
+                    calculateForce(root, body, acceleration);
+                    body.vx += acceleration[0] * DT;
+                    body.vy += acceleration[1] * DT;
+                    body.vz += acceleration[2] * DT;
+                });
+
+                bodies.parallelStream().forEach(body -> {
+                    body.x += body.vx * DT;
+                    body.y += body.vy * DT;
+                    body.z += body.vz * DT;
+                });
+
+                return null;
+            }
+        });
+    }
 
     public static void main(String[] args) {
-        Random rand = new Random();
+        List<Body> bodies = new ArrayList<>(NUM_BODIES);
+        initializeBodies(bodies);
 
-        // Initialize bodies
-        Body[] bodies = initializeBodies(numBodies, rand);
-
-        // Calculate initial energy
         double initialEnergy = calculateEnergy(bodies);
-        System.out.printf("Initial Energy: %e%n", initialEnergy);
+        System.out.printf("Initial energy: %e%n", initialEnergy);
 
-        // Run simulation for 1000 steps
         for (int step = 0; step < 1000; step++) {
-            simulateStep(bodies);
+            KDNode root = buildKDTree(bodies, 0);
+            kickStep(bodies, root);
         }
 
-        // Calculate final energy
         double finalEnergy = calculateEnergy(bodies);
-        System.out.printf("Final Energy: %e%n", finalEnergy);
-    }
-
-    private static Body[] initializeBodies(int n, Random rand) {
-        Body[] bodies = new Body[n + 1];
-
-        // Central body
-        bodies[0] = new Body(1e30, new double[]{0, 0, 0}, new double[]{0, 0, 0});
-
-        // Small bodies in circular orbits
-        for (int i = 1; i <= n; i++) {
-            double radius = 1e11 * rand.nextDouble();
-            double speed = Math.sqrt(G * bodies[0].mass / radius);
-            double angle = 2 * Math.PI * rand.nextDouble();
-
-            bodies[i] = new Body(1e24,
-                    new double[]{radius * Math.cos(angle), radius * Math.sin(angle), 0},
-                    new double[]{-speed * Math.sin(angle), speed * Math.cos(angle), 0});
-        }
-
-        return bodies;
-    }
-
-    private static void simulateStep(Body[] bodies) {
-        // Reset forces
-        Arrays.stream(bodies).parallel().forEach(body -> {
-            body.force[0] = body.force[1] = body.force[2] = 0;
-        });
-
-        // Build kD-tree
-        Node root = buildTree(bodies);
-
-        // Calculate forces using kD-tree
-        Arrays.stream(bodies).parallel().forEach(body -> {
-            calculateForce(body, root);
-        });
-
-        // Update velocities and positions
-        Arrays.stream(bodies).parallel().forEach(body -> {
-            body.vel[0] += body.force[0] / body.mass * dt;
-            body.vel[1] += body.force[1] / body.mass * dt;
-            body.vel[2] += body.force[2] / body.mass * dt;
-
-            body.pos[0] += body.vel[0] * dt;
-            body.pos[1] += body.vel[1] * dt;
-            body.pos[2] += body.vel[2] * dt;
-        });
-    }
-
-    private static Node buildTree(Body[] bodies) {
-        Node root = new Node();
-        root.center[0] = root.center[1] = root.center[2] = 0;
-        root.size = 2 * 1e11;
-
-        for (Body body : bodies) {
-            insertBody(root, body);
-        }
-
-        return root;
-    }
-
-    private static void insertBody(Node node, Body body) {
-        if (node.body == null && node.mass == 0) {
-            node.body = body;
-            node.mass = body.mass;
-            System.arraycopy(body.pos, 0, node.com, 0, 3);
-            return;
-        }
-
-        if (node.body != null) {
-            Body oldBody = node.body;
-            node.body = null;
-            insertBody(node, oldBody);
-        }
-
-        node.mass += body.mass;
-        for (int i = 0; i < 3; i++) {
-            node.com[i] = (node.com[i] * (node.mass - body.mass) + body.pos[i] * body.mass) / node.mass;
-        }
-
-        int index = 0;
-        for (int i = 0; i < 3; i++) {
-            if (body.pos[i] > node.center[i]) {
-                index |= 1 << i;
-            }
-        }
-
-        if (node.children[index] == null) {
-            node.children[index] = new Node();
-            for (int i = 0; i < 3; i++) {
-                node.children[index].center[i] = node.center[i] + (index & (1 << i) != 0 ? 1 : -1) * node.size / 4;
-            }
-            node.children[index].size = node.size / 2;
-        }
-
-        insertBody(node.children[index], body);
-    }
-
-    private static void calculateForce(Body body, Node node) {
-        if (node.body != null && node.body != body) {
-            double dx = node.body.pos[0] - body.pos[0];
-            double dy = node.body.pos[1] - body.pos[1];
-            double dz = node.body.pos[2] - body.pos[2];
-            double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            double force = G * body.mass * node.body.mass / (dist * dist * dist);
-
-            body.force[0] += force * dx;
-            body.force[1] += force * dy;
-            body.force[2] += force * dz;
-            return;
-        }
-
-        double dx = node.com[0] - body.pos[0];
-        double dy = node.com[1] - body.pos[1];
-        double dz = node.com[2] - body.pos[2];
-        double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-        if (node.size / dist < theta) {
-            double force = G * body.mass * node.mass / (dist * dist * dist);
-
-            body.force[0] += force * dx;
-            body.force[1] += force * dy;
-            body.force[2] += force * dz;
-            return;
-        }
-
-        for (Node child : node.children) {
-            if (child != null) {
-                calculateForce(body, child);
-            }
-        }
-    }
-
-    private static double calculateEnergy(Body[] bodies) {
-        return Arrays.stream(bodies).parallel().mapToDouble(body1 -> {
-            double kineticEnergy = 0.5 * body1.mass * (body1.vel[0] * body1.vel[0] + body1.vel[1] * body1.vel[1] + body1.vel[2] * body1.vel[2]);
-            double potentialEnergy = Arrays.stream(bodies).parallel().filter(body2 -> body1 != body2).mapToDouble(body2 -> {
-                double dx = body2.pos[0] - body1.pos[0];
-                double dy = body2.pos[1] - body1.pos[1];
-                double dz = body2.pos[2] - body1.pos[2];
-                double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                return -G * body1.mass * body2.mass / dist;
-            }).sum();
-            return kineticEnergy + potentialEnergy;
-        }).sum();
+        System.out.printf("Final energy: %e%n", finalEnergy);
     }
 }

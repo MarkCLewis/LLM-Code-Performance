@@ -1,98 +1,58 @@
-import java.util.Random;
-import java.util.Arrays;
-
-class Body {
-    double[] position;
-    double[] velocity;
-    double mass;
-
-    public Body(double[] position, double[] velocity, double mass) {
-        this.position = position;
-        this.velocity = velocity;
-        this.mass = mass;
+// Below are only the modified sections from the previous code (to keep it concise):
+// Replace computeForces() with:
+public static void computeForces() {
+    for (Body b : bodies) {
+        b.ax = b.ay = b.az = 0;
     }
+
+    int n = bodies.length;
+
+    java.util.Arrays.stream(bodies).parallel().forEach(bi -> {
+        for (Body bj : bodies) {
+            if (bi == bj) continue;
+
+            double dx = bj.x - bi.x;
+            double dy = bj.y - bi.y;
+            double dz = bj.z - bi.z;
+
+            double distSqr = dx * dx + dy * dy + dz * dz + 1e-10;
+            double dist = Math.sqrt(distSqr);
+            double force = G * bj.mass / (distSqr * dist);
+
+            bi.ax += dx * force;
+            bi.ay += dy * force;
+            bi.az += dz * force;
+        }
+    });
+}
+// This parallel version is not symmetric, so it's about twice as expensive as the original i < j version, but parallel and simpler to implement. Further optimization may require fine-grained task splitting.
+
+// Replace computeEnergy() with:
+public static double computeEnergy() {
+    double kinetic = java.util.Arrays.stream(bodies).parallel().mapToDouble(b -> {
+        double v2 = b.vx * b.vx + b.vy * b.vy + b.vz * b.vz;
+        return 0.5 * b.mass * v2;
+    }).sum();
+
+    int n = bodies.length;
+    double potential = java.util.stream.IntStream.range(0, n).parallel().mapToDouble(i -> {
+        Body bi = bodies[i];
+        double sum = 0;
+        for (int j = i + 1; j < n; j++) {
+            Body bj = bodies[j];
+            double dx = bj.x - bi.x;
+            double dy = bj.y - bi.y;
+            double dz = bj.z - bi.z;
+            double dist = Math.sqrt(dx * dx + dy * dy + dz * dz + 1e-10);
+            sum -= G * bi.mass * bj.mass / dist;
+        }
+        return sum;
+    }).sum();
+
+    return kinetic + potential;
 }
 
-public class NBodySimulation {
-    private static final double G = 6.67430e-11;
-    private static final double DT = 1.0;
-    private static final int NUM_BODIES = 1_000_000;
-    private static final int STEPS = 1000;
-
-    private static double computeEnergy(Body[] bodies) {
-        return Arrays.stream(bodies).parallel().mapToDouble(b1 -> {
-            double energy = 0.5 * b1.mass * (b1.velocity[0] * b1.velocity[0] +
-                                             b1.velocity[1] * b1.velocity[1] +
-                                             b1.velocity[2] * b1.velocity[2]);
-            for (Body b2 : bodies) {
-                if (b1 != b2) {
-                    double dx = b1.position[0] - b2.position[0];
-                    double dy = b1.position[1] - b2.position[1];
-                    double dz = b1.position[2] - b2.position[2];
-                    double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                    energy -= G * b1.mass * b2.mass / dist;
-                }
-            }
-            return energy;
-        }).sum();
-    }
-
-    private static void updateVelocities(Body[] bodies) {
-        Arrays.stream(bodies).parallel().forEach(b1 -> {
-            double[] force = {0.0, 0.0, 0.0};
-            for (Body b2 : bodies) {
-                if (b1 != b2) {
-                    double dx = b2.position[0] - b1.position[0];
-                    double dy = b2.position[1] - b1.position[1];
-                    double dz = b2.position[2] - b1.position[2];
-                    double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                    double F = G * b1.mass * b2.mass / (dist * dist * dist);
-                    force[0] += F * dx;
-                    force[1] += F * dy;
-                    force[2] += F * dz;
-                }
-            }
-            b1.velocity[0] += force[0] / b1.mass * DT;
-            b1.velocity[1] += force[1] / b1.mass * DT;
-            b1.velocity[2] += force[2] / b1.mass * DT;
-        });
-    }
-
-    private static void updatePositions(Body[] bodies) {
-        Arrays.stream(bodies).parallel().forEach(body -> {
-            body.position[0] += body.velocity[0] * DT;
-            body.position[1] += body.velocity[1] * DT;
-            body.position[2] += body.velocity[2] * DT;
-        });
-    }
-
-    private static Body[] initializeBodies(int numBodies, double centralMass) {
-        Body[] bodies = new Body[numBodies];
-        Random random = new Random();
-        bodies[0] = new Body(new double[]{0.0, 0.0, 0.0}, new double[]{0.0, 0.0, 0.0}, centralMass);
-        double radius = 1.0e9;
-        for (int i = 1; i < numBodies; i++) {
-            double angle = 2 * Math.PI * random.nextDouble();
-            double[] pos = {radius * Math.cos(angle), radius * Math.sin(angle), 0.0};
-            double speed = Math.sqrt(G * centralMass / radius);
-            double[] vel = {-speed * Math.sin(angle), speed * Math.cos(angle), 0.0};
-            bodies[i] = new Body(pos, vel, 1.0);
-        }
-        return bodies;
-    }
-
-    public static void main(String[] args) {
-        Body[] bodies = initializeBodies(NUM_BODIES, 1.989e30);
-
-        double initialEnergy = computeEnergy(bodies);
-        System.out.printf("Initial Energy: %.6e\n", initialEnergy);
-
-        for (int step = 0; step < STEPS; step++) {
-            updateVelocities(bodies);
-            updatePositions(bodies);
-        }
-
-        double finalEnergy = computeEnergy(bodies);
-        System.out.printf("Final Energy: %.6e\n", finalEnergy);
-    }
-}
+// You must run this with adequate heap space, like:
+// java -Xmx16g NBodySimulation
+// Java Parallel Streams scale well up to a few dozen cores. Beyond that, you'll want finer control (e.g., with ForkJoinPool or ExecutorService).
+// This is still O(N²). For real performance at scale, consider a Barnes-Hut tree or Fast Multipole Method.
