@@ -1,0 +1,1 @@
+gcc $1 -lm -fopenmp -O3 -march=native -flto

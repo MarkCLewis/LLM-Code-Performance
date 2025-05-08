@@ -8,8 +8,8 @@
 // --- Constants ---
 #define G              1.0
 #define DT             0.001
-#define NUM_STEPS      1000
-#define N_ORBITING     100000 // Reduced N for faster testing with tree overhead
+#define NUM_STEPS      10
+#define N_ORBITING     1000000 // Reduced N for faster testing with tree overhead
 #define N_TOTAL        (N_ORBITING + 1)
 #define EPSILON_SQ     1e-6
 #define THETA          0.3     // Barnes-Hut opening angle <<< NEW

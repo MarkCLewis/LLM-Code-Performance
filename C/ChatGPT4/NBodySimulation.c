@@ -3,8 +3,8 @@
 #include <math.h>
 #include <time.h>
 
-#define N_BODIES 1000000
-#define STEPS 1000
+#define N_BODIES 10000
+#define STEPS 100
 #define G 6.67430e-11
 #define DT 1.0
 

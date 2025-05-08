@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-public class NBodySimulationParallelKDTree {
+public class NBodySimulationKDop {
 
     private static final double GRAVITATIONAL_CONSTANT = 6.67430e-11;
     private static final double THETA = 0.3;

@@ -2,10 +2,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
-public class NBodySimulation {
+public class NBodySimulationPar {
     private static final double G = 6.67430e-11; // Gravitational constant
-    private static final double DT = 1e-3; // Time step
-    private static final int NUM_BODIES = 1000000; // Number of bodies
+    private static final double DT = 3600*24*365*1e-3; // Time step
+    private static final int NUM_BODIES = 10000; // Number of bodies
 
     static class Body {
         double x, y, z;
@@ -23,7 +23,10 @@ public class NBodySimulation {
         }
     }
 
- NUM_BODIES).parallel().forEach(i -> {
+    private static void initializeBodies(List<Body> bodies) {
+        bodies.add(new Body(0, 0, 0, 0, 0, 0, 1e30)); // Central body mass
+
+        IntStream.range(1, NUM_BODIES).parallel().forEach(i -> {
             double angle = 2 * Math.PI * i / (NUM_BODIES - 1);
             bodies.add(new Body(
                 Math.cos(angle) * 1e11,
@@ -32,7 +35,7 @@ public class NBodySimulation {
                 -Math.sin(angle) * Math.sqrt(G * bodies.get(0).mass / 1e11),
                 Math.cos(angle) * Math.sqrt(G * bodies.get(0).mass / 1e11),
                 0,
-                1e24 // Small body mass
+                1e24 / NUM_BODIES // Small body mass
             ));
         });
     }
@@ -85,7 +88,7 @@ public class NBodySimulation {
         double initialEnergy = calculateEnergy(bodies);
         System.out.printf("Initial energy: %e%n", initialEnergy);
 
-        for (int step = 0; step < 1000; step++) {
+        for (int step = 0; step < 100; step++) {
             kickStep(bodies);
         }
 

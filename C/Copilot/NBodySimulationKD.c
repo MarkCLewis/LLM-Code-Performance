@@ -4,7 +4,7 @@
 #include <omp.h>
 
 #define G 6.67430e-11 // Gravitational constant
-#define DT 1e-3 // Time step
+#define DT 3600*24*365*1e-3 // Time step
 #define THETA 0.3 // Theta value for approximation
 
 typedef struct {
@@ -44,7 +44,45 @@ double calculate_energy(Body *bodies, int n) {
         double potential = 0.0;
         for (int j = 0; j < n; j++) {
             if (i != j) {
-                return energy;
+                double dx = bodies[i].x - bodies[j].x;
+                double dy = bodies[i].y - bodies[j].y;
+                double dz = bodies[i].z - bodies[j].z;
+                double distance = sqrt(dx * dx + dy * dy + dz * dz);
+                potential -= G * bodies[i].mass * bodies[j].mass / distance;
+            }
+        }
+        energy += kinetic + 0.5 * potential;
+    }
+    return energy;
+}
+
+// double calculate_energy(Body *bodies, int n) {
+//     double energy = 0.0;
+//     #pragma omp parallel for reduction(+:energy)
+//     for (int i = 0; i < n; i++) {
+//         double kinetic = 0.5 * bodies[i].mass * (bodies[i].vx * bodies[i].vx + bodies[i].vy * bodies[i].vy + bodies[i].vz * bodies[i].vz);
+//         double potential = 0.0;
+//         for (int j = 0; j < n; j++) {
+//             if (i != j) {
+//                 return energy;
+// }
+
+int compare_x(const void *a, const void *b) {
+    Body *bodyA = (Body *)a;
+    Body *bodyB = (Body *)b;
+    return (bodyA->x < bodyB->x) ? -1 : (bodyA->x > bodyB->x);
+}
+
+int compare_y(const void *a, const void *b) {
+    Body *bodyA = (Body *)a;
+    Body *bodyB = (Body *)b;
+    return (bodyA->y < bodyB->y) ? -1 : (bodyA->y > bodyB->y);
+}
+
+int compare_z(const void *a, const void *b) {
+    Body *bodyA = (Body *)a;
+    Body *bodyB = (Body *)b;
+    return (bodyA->z < bodyB->z) ? -1 : (bodyA->z > bodyB->z);
 }
 
 KDNode* build_kdtree(Body *bodies, int n, int depth) {
@@ -57,7 +95,7 @@ KDNode* build_kdtree(Body *bodies, int n, int depth) {
     qsort(bodies, n, sizeof(Body), (int (*)(const void *, const void *)) (axis == 0 ? compare_x : (axis == 1 ? compare_y : compare_z)));
 
     KDNode *node = (KDNode *)malloc(sizeof(KDNode));
-    node->1);
+    node->left =  build_kdtree(bodies, median, depth + 1);
     node->right = build_kdtree(bodies + median + 1, n - median - 1, depth + 1);
 
     for (int i = 0; i < 3; i++) {
@@ -115,14 +153,14 @@ void kick_step(Body *bodies, int n, KDNode *root) {
 }
 
 int main() {
-    int n = 1000000; // Number of bodies
+    int n = 100000; // Number of bodies
     Body *bodies = (Body *)malloc(n * sizeof(Body));
     initialize_bodies(bodies, n);
 
     double initial_energy = calculate_energy(bodies, n);
     printf("Initial energy: %e\n", initial_energy);
 
-    for (int step = 0; step < 1000; step++) {
+    for (int step = 0; step < 10; step++) {
         KDNode *root = build_kdtree(bodies, n, 0);
         kick_step(bodies, n, root);
         free(root);

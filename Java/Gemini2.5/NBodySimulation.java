@@ -258,8 +258,8 @@ public class NBodySimulation {
         System.out.println("Starting Sequential 3D N-Body Simulation in Java...");
 
         // --- Simulation Parameters ---
-        int numSmallBodies = Integer.parseInt(args[1]); // ONE MILLION orbiting bodies as requested
-        int numSteps = Integer.parseInt(args[0]);            // Number of simulation steps as requested
+        int numSmallBodies = 10000; // ONE MILLION orbiting bodies as requested
+        int numSteps = 100;            // Number of simulation steps as requested
         double centralMass = 1.0e6;      // Mass of the central body (arbitrary simulation units)
         double smallMass = 1.0;          // Mass of the small bodies
         double minDist = 5.0;           // Minimum orbital radius

@@ -418,8 +418,8 @@ void print_system_stats(Body* bodies, int n) {
 
 int main() {
     // Problem parameters
-    const int N = 1000000 + 1;  // 1 central + 1 million orbiting bodies
-    const int STEPS = 1000;
+    const int N = 100000 + 1;  // 1 central + 1 million orbiting bodies
+    const int STEPS = 10;
     const double dt = 0.01 * YEAR;  // Timestep of 0.01 years
     
     // OpenMP setup

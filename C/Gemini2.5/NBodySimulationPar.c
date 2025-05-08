@@ -8,8 +8,8 @@
 // (Keep constants the same as the sequential version)
 #define G              1.0
 #define DT             0.001
-#define NUM_STEPS      1000
-#define N_ORBITING     1000000 // <<< WARNING: Still computationally intensive, but faster with threads
+#define NUM_STEPS      100
+#define N_ORBITING     10000 // <<< WARNING: Still computationally intensive, but faster with threads
 #define N_TOTAL        (N_ORBITING + 1)
 #define EPSILON_SQ     1e-6
 #define M_PI           3.1415927 // Gemini 2.5 didn't create this.

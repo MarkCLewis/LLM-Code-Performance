@@ -4,7 +4,7 @@
 #include <omp.h>
 
 #define G 6.67430e-11 // Gravitational constant
-#define DT 1e-3 // Time step
+#define DT 3600*24*365*1e-3 // Time step
 
 typedef struct {
     double x, y, z;
@@ -79,14 +79,14 @@ void kick_step(Body *bodies, int n) {
 }
 
 int main() {
-    int n = 1000000; // Number of bodies
+    int n = 10000; // Number of bodies
     Body *bodies = (Body *)malloc(n * sizeof(Body));
     initialize_bodies(bodies, n);
 
     double initial_energy = calculate_energy(bodies, n);
     printf("Initial energy: %e\n", initial_energy);
 
-    for (int step = 0; step < 1000; step++) {
+    for (int step = 0; step < 100; step++) {
         kick_step(bodies, n);
     }
 

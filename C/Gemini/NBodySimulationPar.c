@@ -167,11 +167,11 @@ void free_system(System *system) {
 }
 
 int main() {
-    int num_orbiting_bodies = 1000000;
+    int num_orbiting_bodies = 10000;
     double central_mass = 1.989e30; // Mass of the Sun (kg)
     double orbit_radius = 1.496e11; // 1 AU (m)
-    double orbiting_mass = 5.972e24; // Mass of the Earth (kg)
-    int num_steps = 1000;
+    double orbiting_mass = 5.972e24 / num_orbiting_bodies; // Mass of the Earth (kg)
+    int num_steps = 100;
     double time_step = 3600 * 24 * 7; // 1 week in seconds
 
     // Initialize the system

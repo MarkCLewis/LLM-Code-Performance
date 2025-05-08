@@ -4,10 +4,10 @@ import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.IntStream;
 
-public class NBodySimulation {
+public class NBodySimulationKD {
     private static final double G = 6.67430e-11; // Gravitational constant
-    private static final double DT = 1e-3; // Time step
-    private static final int NUM_BODIES = 1000000; // Number of bodies
+    private static final double DT = 3600*24*365*1e-3; // Time step
+    private static final int NUM_BODIES = 100000; // Number of bodies
     private static final double THETA = 0.3; // Theta value for approximation
 
     static class Body {
@@ -23,7 +23,8 @@ public class NBodySimulation {
             this.vy = vy;
             this.vz = vz;
             this.mass = mass;
-           }
+        }
+    }
 
     static class KDNode {
         Body body;
@@ -48,7 +49,7 @@ public class NBodySimulation {
                 -Math.sin(angle) * Math.sqrt(G * bodies.get(0).mass / 1e11),
                 Math.cos(angle) * Math.sqrt(G * bodies.get(0).mass / 1e11),
                 0,
-                1e24 // Small body mass
+                1e24 / NUM_BODIES // Small body mass
             ));
         });
     }
@@ -150,7 +151,7 @@ public class NBodySimulation {
         double initialEnergy = calculateEnergy(bodies);
         System.out.printf("Initial energy: %e%n", initialEnergy);
 
-        for (int step = 0; step < 1000; step++) {
+        for (int step = 0; step < 10; step++) {
             KDNode root = buildKDTree(bodies, 0);
             kickStep(bodies, root);
         }

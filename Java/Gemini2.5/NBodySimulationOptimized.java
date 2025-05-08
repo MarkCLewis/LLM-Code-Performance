@@ -439,8 +439,8 @@ public class NBodySimulationOptimized { // Renamed class
         int processors = Runtime.getRuntime().availableProcessors(); System.out.println("Available processors: " + processors); System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", Integer.toString(processors)); System.out.println("Using common ForkJoinPool parallelism: " + java.util.concurrent.ForkJoinPool.commonPool().getParallelism());
 
         // --- Parameters ---
-        int numSmallBodies = Integer.parseInt(args[1]); // ONE MILLION orbiting bodies as requested
-        int numSteps = Integer.parseInt(args[0]);            // Number of simulation steps as requested
+        int numSmallBodies = 100000; // ONE MILLION orbiting bodies as requested
+        int numSteps = 10;            // Number of simulation steps as requested
         double centralMass = 1.0e6; double smallMass = 1.0;
         double minDist = 5.0; double maxDist = 50.0;
         double dt = 0.005; long seed = 123456789L;

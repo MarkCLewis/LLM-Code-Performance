@@ -8,9 +8,8 @@
 // --- Constants ---
 #define G              1.0
 #define DT             0.001
-#define NUM_STEPS      1000
-// #define N_ORBITING     100000 // Keep N manageable for testing
-#define N_ORBITING     200000 // Increase N slightly to see optimization benefits
+#define NUM_STEPS      10
+#define N_ORBITING     1000000 // Increase N slightly to see optimization benefits
 #define N_TOTAL        (N_ORBITING + 1)
 #define EPSILON_SQ     1e-8    // Softening factor squared (can be tuned)
 #define THETA          0.3     // Barnes-Hut opening angle

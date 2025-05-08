@@ -6,8 +6,8 @@
 // --- Constants ---
 #define G              1.0     // Gravitational constant (simplified units)
 #define DT             0.001   // Time step (adjust based on system dynamics)
-#define NUM_STEPS      1000    // Number of simulation steps
-#define N_ORBITING     1000000 // Number of orbiting bodies <<< WARNING: VERY LARGE for sequential!
+#define NUM_STEPS      100    // Number of simulation steps
+#define N_ORBITING     10000 // Number of orbiting bodies <<< WARNING: VERY LARGE for sequential!
 #define N_TOTAL        (N_ORBITING + 1) // Total number of bodies (central + orbiting)
 #define EPSILON_SQ     1e-6    // Softening factor squared to prevent singularities
 #define M_PI           3.1415927 // Gemini 2.5 didn't create this.

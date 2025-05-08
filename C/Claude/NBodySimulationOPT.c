@@ -617,43 +617,132 @@ void initialize_system(Body* bodies, int n_bodies, double central_mass, double o
     }
 }
 
+// void print_system_stats(Body* bodies, int n) {
+//     printf("System statistics:\n");
+//     printf("Central body: position (%.2e, %.2e, %.2e), mass: %.2e\n", 
+//            bodies[0].x, bodies[0].y, bodies[0].z, bodies[0].mass);
+    
+//     // Calculate system boundaries and statistics
+//     double min_x = bodies[0].x, max_x = bodies[0].x;
+//     double min_y = bodies[0].y, max_y = bodies[0].y;
+//     double min_z = bodies[0].z, max_z = bodies[0].z;
+    
+//     double avg_distance = 0.0;
+//     double max_velocity = 0.0;
+//     double total_mass = bodies[0].mass;
+    
+//     #pragma omp parallel
+//     {
+//         double local_min_x = min_x, local_max_x = max_x;
+//         double local_min_y = min_y, local_max_y = max_y;
+//         double local_min_z = min_z, local_max_z = max_z;
+//         double local_avg_distance = 0.0;
+//         double local_max_velocity = 0.0;
+//         double local_total_mass = 0.0;
+        
+//         #pragma omp for
+//         for (int i = 1; i < n; i++) {
+//             if (bodies[i].x < local_min_x) local_min_x = bodies[i].x;
+//             if (bodies[i].x > local_max_x) local_max_x = bodies[i].x;
+//             if (bodies[i].y < local_min_y) local_min_y = bodies[i].y;
+//             if (bodies[i].y > local_max_y) local_max_y = bodies[i].y;
+//             if (bodies[i].z < local_min_z) local_min_z = bodies[i].z;
+//             if (bodies[i].z > local_max_z) local_max_z = bodies[i].z;
+            
+//             double distance = sqrt(bodies[i].x * bodies[i].x + 
+//                                   bodies[i].y * bodies[i].y + 
+//                                   bodies[i].z * bodies[i].z);
+//             local_avg_distance += distance;
+            
+//             double velocity = sqrt(bodies[i].vx * bodies[i].vx + 
+//                                   bodies[i].vy * bodies[i].vy + 
+//                                   bodies[i].v
+
 void print_system_stats(Body* bodies, int n) {
     printf("System statistics:\n");
     printf("Central body: position (%.2e, %.2e, %.2e), mass: %.2e\n", 
            bodies[0].x, bodies[0].y, bodies[0].z, bodies[0].mass);
     
-    // Calculate system boundaries and statistics
+    // Calculate system boundaries
     double min_x = bodies[0].x, max_x = bodies[0].x;
     double min_y = bodies[0].y, max_y = bodies[0].y;
     double min_z = bodies[0].z, max_z = bodies[0].z;
     
-    double avg_distance = 0.0;
-    double max_velocity = 0.0;
-    double total_mass = bodies[0].mass;
+    for (int i = 1; i < n; i++) {
+        if (bodies[i].x < min_x) min_x = bodies[i].x;
+        if (bodies[i].x > max_x) max_x = bodies[i].x;
+        if (bodies[i].y < min_y) min_y = bodies[i].y;
+        if (bodies[i].y > max_y) max_y = bodies[i].y;
+        if (bodies[i].z < min_z) min_z = bodies[i].z;
+        if (bodies[i].z > max_z) max_z = bodies[i].z;
+    }
     
-    #pragma omp parallel
-    {
-        double local_min_x = min_x, local_max_x = max_x;
-        double local_min_y = min_y, local_max_y = max_y;
-        double local_min_z = min_z, local_max_z = max_z;
-        double local_avg_distance = 0.0;
-        double local_max_velocity = 0.0;
-        double local_total_mass = 0.0;
-        
-        #pragma omp for
-        for (int i = 1; i < n; i++) {
-            if (bodies[i].x < local_min_x) local_min_x = bodies[i].x;
-            if (bodies[i].x > local_max_x) local_max_x = bodies[i].x;
-            if (bodies[i].y < local_min_y) local_min_y = bodies[i].y;
-            if (bodies[i].y > local_max_y) local_max_y = bodies[i].y;
-            if (bodies[i].z < local_min_z) local_min_z = bodies[i].z;
-            if (bodies[i].z > local_max_z) local_max_z = bodies[i].z;
-            
-            double distance = sqrt(bodies[i].x * bodies[i].x + 
-                                  bodies[i].y * bodies[i].y + 
-                                  bodies[i].z * bodies[i].z);
-            local_avg_distance += distance;
-            
-            double velocity = sqrt(bodies[i].vx * bodies[i].vx + 
-                                  bodies[i].vy * bodies[i].vy + 
-                                  bodies[i].v
+    printf("System boundaries:\n");
+    printf("  X: [%.2e, %.2e]\n", min_x, max_x);
+    printf("  Y: [%.2e, %.2e]\n", min_y, max_y);
+    printf("  Z: [%.2e, %.2e]\n", min_z, max_z);
+}
+
+int main() {
+    // Problem parameters
+    const int N = 100000 + 1;  // 1 central + 1 million orbiting bodies
+    const int STEPS = 10;
+    const double dt = 0.01 * YEAR;  // Timestep of 0.01 years
+    
+    // OpenMP setup
+    int num_threads = omp_get_max_threads();
+    printf("Starting N-body simulation with %d bodies for %d steps using %d threads\n", 
+           N, STEPS, num_threads);
+    printf("Using Barnes-Hut approximation with theta = %.2f\n", THETA);
+    printf("Allocating memory...\n");
+    
+    // Allocate memory for bodies
+    Body* bodies = (Body*)malloc(N * sizeof(Body));
+    if (!bodies) {
+        printf("Memory allocation failed!\n");
+        return 1;
+    }
+    
+    printf("Initializing system...\n");
+    
+    // Initialize system with Sun-like central body and Earth-like orbits
+    initialize_system(bodies, N, SOLAR_MASS, 0.8 * AU, 5.0 * AU);
+    
+    print_system_stats(bodies, N);
+    
+    // Calculate initial energy
+    printf("Calculating initial energy...\n");
+    double initial_energy = calculate_energy(bodies, N);
+    printf("Initial energy: %.10e\n", initial_energy);
+    
+    printf("Starting simulation...\n");
+    double start_time = omp_get_wtime();
+    
+    // Run simulation
+    for (int step = 0; step < STEPS; step++) {
+        if (step % 100 == 0) {
+            printf("Step %d of %d (%.1f%%)\n", step, STEPS, 100.0 * step / STEPS);
+        }
+        simulate_step_barnes_hut(bodies, N, dt);
+    }
+    
+    double end_time = omp_get_wtime();
+    double elapsed_time = end_time - start_time;
+    printf("Simulation completed in %.2f seconds\n", elapsed_time);
+    
+    // Calculate final energy
+    printf("Calculating final energy...\n");
+    double final_energy = calculate_energy(bodies, N);
+    printf("Final energy: %.10e\n", final_energy);
+    
+    // Calculate energy error
+    double energy_error = (final_energy - initial_energy) / initial_energy;
+    printf("Relative energy error: %.10e (%.10f%%)\n", energy_error, energy_error * 100.0);
+    
+    print_system_stats(bodies, N);
+    
+    // Free memory
+    free(bodies);
+    
+    return 0;
+}

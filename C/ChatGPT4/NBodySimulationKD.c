@@ -4,8 +4,8 @@
 #include <time.h>
 #include <omp.h>
 
-#define N_BODIES 1000000
-#define STEPS 1000
+#define N_BODIES 100000
+#define STEPS 10
 #define G 6.67430e-11
 #define DT 1.0
 #define THETA 0.3

@@ -4,7 +4,7 @@
 #include <omp.h>
 
 #define G 6.67430e-11 // Gravitational constant
-#define DT 1e-3 // Time step
+#define DT 3600*24*365*1e-3 // Time step
 #define THETA 0.3 // Theta value for approximation
 
 typedef struct {
@@ -165,8 +165,24 @@ void kick_step(Body *bodies, int n, KDNode *root) {
 }
 
 int main() {
-    int n = 1000000; // Number of bodies
+    int n = 100000; // Number of bodies
     Body *bodies = (Body *)malloc(n * sizeof(Body));
     initialize_bodies(bodies, n);
 
+    KDTreePool *pool = create_pool(n*3);
+
     double initial_energy = calculate_energy(bodies, n);
+    printf("Initial energy: %e\n", initial_energy);
+
+    for (int step = 0; step < 10; step++) {
+        KDNode *root = build_kdtree(bodies, n, 0, pool);
+        kick_step(bodies, n, root);
+        free(root);
+    }
+
+    double final_energy = calculate_energy(bodies, n);
+    printf("Final energy: %e\n", final_energy);
+
+    free(bodies);
+    return 0;
+}

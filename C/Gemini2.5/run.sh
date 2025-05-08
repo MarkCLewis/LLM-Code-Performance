@@ -1,1 +1,0 @@
-gcc nbody_kdtree.c -o nbody_kdtree -lm -fopenmp -O3 -march=native -ffast-math -flto -DNDEBUG -std=c99

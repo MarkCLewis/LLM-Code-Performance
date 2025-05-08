@@ -1,0 +1,1 @@
+gcc $1 -O3 -lm -fopenmp -march=native -ffast-math -funroll-loops

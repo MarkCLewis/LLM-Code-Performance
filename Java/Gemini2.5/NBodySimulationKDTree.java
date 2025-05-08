@@ -448,8 +448,8 @@ public class NBodySimulationKDTree { // Renamed class
         System.out.println("Using common ForkJoinPool with parallelism: " + java.util.concurrent.ForkJoinPool.commonPool().getParallelism());
 
         // --- Simulation Parameters ---
-        int numSmallBodies = Integer.parseInt(args[1]); // ONE MILLION orbiting bodies as requested
-        int numSteps = Integer.parseInt(args[0]);            // Number of simulation steps as requested
+        int numSmallBodies = 100000; // ONE MILLION orbiting bodies as requested
+        int numSteps = 10;            // Number of simulation steps as requested
         double centralMass = 1.0e6;
         double smallMass = 1.0;
         double minDist = 5.0;
