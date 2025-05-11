@@ -1,0 +1,20 @@
+[package]
+name = "nbody_simulation_par"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rand = "0.8"
+rayon = "1.10" # Or latest version
+
+[build]
+rustflags = ["-C", "target-cpu=native"]
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+overflow-checks = false
+debug = false
+strip = true

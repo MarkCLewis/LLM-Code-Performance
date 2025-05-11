@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"runtime"
 	"sort" // Still needed for sort.Interface, now using sort.Select
 	"sync"
@@ -14,8 +15,8 @@ const (
 	G                 = 1.0
 	dt                = 0.001
 	epsilon           = 0.01
-	numSteps          = 1000
-	numOrbitingBodies = 1000000
+	numSteps          = 10
+	numOrbitingBodies = 100000
 	// numOrbitingBodies = 5000 // Smaller number for quicker testing
 	theta = 0.3
 )
@@ -87,36 +88,144 @@ func getNode() *KDNode {
 }
 
 // --- Vector Operations --- (Same as before)
-func (v Vector3D) Add(other Vector3D) Vector3D                    { /* ... */ }
-func (v Vector3D) Subtract(other Vector3D) Vector3D               { /* ... */ }
-func (v Vector3D) Scale(scalar float64) Vector3D                  { /* ... */ }
-func (v Vector3D) MagnitudeSquared() float64                      { /* ... */ }
-func (v Vector3D) Magnitude() float64                             { /* ... */ }
-func (v Vector3D) Normalize() Vector3D                            { /* ... */ }
-func (v Vector3D) Component(axis int) float64                     { /* ... */ }
-func (v Vector3D) withComponent(axis int, value float64) Vector3D { /* ... */ }
-func (v Vector3D) Dot(other Vector3D) float64                     { /* ... */ }
-func (v Vector3D) Cross(other Vector3D) Vector3D                  { /* ... */ }
+// Add returns the sum of two vectors
+func (v Vector3D) Add(other Vector3D) Vector3D {
+	return Vector3D{v.X + other.X, v.Y + other.Y, v.Z + other.Z}
+}
+
+// Subtract returns the difference between two vectors (v - other)
+func (v Vector3D) Subtract(other Vector3D) Vector3D {
+	return Vector3D{v.X - other.X, v.Y - other.Y, v.Z - other.Z}
+}
+
+// Scale returns the vector scaled by a scalar factor
+func (v Vector3D) Scale(scalar float64) Vector3D {
+	return Vector3D{v.X * scalar, v.Y * scalar, v.Z * scalar}
+}
+
+// MagnitudeSquared returns the squared magnitude (length) of the vector
+func (v Vector3D) MagnitudeSquared() float64 {
+	return v.X*v.X + v.Y*v.Y + v.Z*v.Z
+}
+
+// Magnitude returns the magnitude (length) of the vector
+func (v Vector3D) Magnitude() float64 {
+	return math.Sqrt(v.MagnitudeSquared())
+}
+
+// Normalize returns a unit vector in the same direction
+func (v Vector3D) Normalize() Vector3D {
+	mag := v.Magnitude()
+	if mag == 0 {
+		return Vector3D{0, 0, 0} // Avoid division by zero
+	}
+	return v.Scale(1.0 / mag)
+}
+
+// Component returns the vector component along a given axis (0=X, 1=Y, 2=Z)
+func (v Vector3D) Component(axis int) float64 {
+	switch axis {
+	case 0:
+		return v.X
+	case 1:
+		return v.Y
+	case 2:
+		return v.Z
+	default:
+		panic(fmt.Sprintf("Invalid axis: %d", axis))
+	}
+}
+
+// Helper to set a component of a vector (returns a new vector)
+func (v Vector3D) withComponent(axis int, value float64) Vector3D {
+	switch axis {
+	case 0:
+		return Vector3D{value, v.Y, v.Z}
+	case 1:
+		return Vector3D{v.X, value, v.Z}
+	case 2:
+		return Vector3D{v.X, v.Y, value}
+	default:
+		panic(fmt.Sprintf("Invalid axis: %d", axis))
+	}
+}
+
+// Add Dot and Cross product helpers to Vector3D
+func (v Vector3D) Dot(other Vector3D) float64 {
+	return v.X*other.X + v.Y*other.Y + v.Z*other.Z
+}
+
+func (v Vector3D) Cross(other Vector3D) Vector3D {
+	return Vector3D{
+		v.Y*other.Z - v.Z*other.Y,
+		v.Z*other.X - v.X*other.Z,
+		v.X*other.Y - v.Y*other.X,
+	}
+}
 
 // Implementations omitted for brevity - they are the same as before
 
 // --- Bounding Box Operations --- (Same as before)
-func (bb BoundingBox) Contains(p Vector3D) bool        { /* ... */ }
-func (bb *BoundingBox) Expand(other BoundingBox)       { /* ... */ }
-func (bb *BoundingBox) ExpandWithPoint(p Vector3D)     { /* ... */ }
-func calculateOverallBounds(bodies []Body) BoundingBox { /* ... */ }
+// Contains checks if a point is within the bounding box
+func (bb BoundingBox) Contains(p Vector3D) bool {
+	return p.X >= bb.Min.X && p.X <= bb.Max.X &&
+		p.Y >= bb.Min.Y && p.Y <= bb.Max.Y &&
+		p.Z >= bb.Min.Z && p.Z <= bb.Max.Z
+}
+
+// Expand includes another point or bounding box
+func (bb *BoundingBox) Expand(other BoundingBox) {
+	bb.Min.X = math.Min(bb.Min.X, other.Min.X)
+	bb.Min.Y = math.Min(bb.Min.Y, other.Min.Y)
+	bb.Min.Z = math.Min(bb.Min.Z, other.Min.Z)
+	bb.Max.X = math.Max(bb.Max.X, other.Max.X)
+	bb.Max.Y = math.Max(bb.Max.Y, other.Max.Y)
+	bb.Max.Z = math.Max(bb.Max.Z, other.Max.Z)
+}
+
+// ExpandWithPoint includes a single point
+func (bb *BoundingBox) ExpandWithPoint(p Vector3D) {
+	bb.Min.X = math.Min(bb.Min.X, p.X)
+	bb.Min.Y = math.Min(bb.Min.Y, p.Y)
+	bb.Min.Z = math.Min(bb.Min.Z, p.Z)
+	bb.Max.X = math.Max(bb.Max.X, p.X)
+	bb.Max.Y = math.Max(bb.Max.Y, p.Y)
+	bb.Max.Z = math.Max(bb.Max.Z, p.Z)
+}
+
+// Calculate initial bounding box for all bodies
+func calculateOverallBounds(bodies []Body) BoundingBox {
+	if len(bodies) == 0 {
+		return BoundingBox{} // Or handle error
+	}
+	bounds := BoundingBox{Min: bodies[0].Position, Max: bodies[0].Position}
+	for i := 1; i < len(bodies); i++ {
+		bounds.ExpandWithPoint(bodies[i].Position)
+	}
+	// Add a small margin to avoid issues with particles exactly on the boundary
+	margin := 1e-5
+	bounds.Min = bounds.Min.Subtract(Vector3D{margin, margin, margin})
+	bounds.Max = bounds.Max.Add(Vector3D{margin, margin, margin})
+	return bounds
+}
 
 // Implementations omitted for brevity - they are the same as before
 
 // --- k-D Tree Construction (Optimized) ---
 
 // bodySorter remains the same (needed for sort.Interface for sort.Select)
-type bodySorter struct { /* ... */
+// Interface for sorting particle indices based on position along an axis
+type bodySorter struct {
+	indices []int
+	bodies  []Body
+	axis    int
 }
 
-func (s *bodySorter) Len() int           { /* ... */ }
-func (s *bodySorter) Swap(i, j int)      { /* ... */ }
-func (s *bodySorter) Less(i, j int) bool { /* ... */ }
+func (s *bodySorter) Len() int      { return len(s.indices) }
+func (s *bodySorter) Swap(i, j int) { s.indices[i], s.indices[j] = s.indices[j], s.indices[i] }
+func (s *bodySorter) Less(i, j int) bool {
+	return s.bodies[s.indices[i]].Position.Component(s.axis) < s.bodies[s.indices[j]].Position.Component(s.axis)
+}
 
 // Implementations omitted for brevity - they are the same as before
 
@@ -334,7 +443,7 @@ func simulateStepParallelKDTree(bodies []Body, numWorkers int, timeStep, gravita
 	// In a real application, you might init the pool once outside the loop
 	// and just reset the index here. initNodePool includes the reset.
 	initNodePool(n) // Ensure pool is ready and reset index
-	buildStart := time.Now()
+	// buildStart := time.Now()
 	initialBounds := calculateOverallBounds(bodies)
 	particleIndices := make([]int, n) // Still need indices slice
 	for i := range particleIndices {
@@ -342,10 +451,10 @@ func simulateStepParallelKDTree(bodies []Body, numWorkers int, timeStep, gravita
 	}
 
 	treeRoot := buildKDTree(particleIndices, bodies, 0, initialBounds)
-	buildDuration := time.Since(buildStart) // Optional profiling
+	// buildDuration := time.Since(buildStart) // Optional profiling
 
 	// --- 1. Parallel Force/Acceleration Calculation using k-D Tree ---
-	forceStart := time.Now() // Optional profiling
+	// forceStart := time.Now() // Optional profiling
 	wg.Add(numWorkers)
 	chunkSize := (n + numWorkers - 1) / numWorkers
 	for i := 0; i < numWorkers; i++ {
@@ -362,10 +471,10 @@ func simulateStepParallelKDTree(bodies []Body, numWorkers int, timeStep, gravita
 		go calculateForceKDTreeChunk(treeRoot, bodies, start, end, &wg, thetaSq, gravitationalConstant, softeningFactor)
 	}
 	wg.Wait()
-	forceDuration := time.Since(forceStart) // Optional profiling
+	// forceDuration := time.Since(forceStart) // Optional profiling
 
 	// --- 2. Parallel Velocity Update (Kick) ---
-	velStart := time.Now() // Optional profiling
+	// velStart := time.Now() // Optional profiling
 	wg.Add(numWorkers)
 	for i := 0; i < numWorkers; i++ {
 		start := i * chunkSize
@@ -380,10 +489,10 @@ func simulateStepParallelKDTree(bodies []Body, numWorkers int, timeStep, gravita
 		go updateVelocityChunk(bodies, start, end, &wg, timeStep)
 	}
 	wg.Wait()
-	velDuration := time.Since(velStart) // Optional profiling
+	// velDuration := time.Since(velStart) // Optional profiling
 
 	// --- 3. Parallel Position Update (Step) ---
-	posStart := time.Now() // Optional profiling
+	// posStart := time.Now() // Optional profiling
 	wg.Add(numWorkers)
 	for i := 0; i < numWorkers; i++ {
 		start := i * chunkSize
@@ -398,7 +507,7 @@ func simulateStepParallelKDTree(bodies []Body, numWorkers int, timeStep, gravita
 		go updatePositionChunk(bodies, start, end, &wg, timeStep)
 	}
 	wg.Wait()
-	posDuration := time.Since(posStart) // Optional profiling
+	// posDuration := time.Since(posStart) // Optional profiling
 
 	// Optional Step Timing Print
 	// if n < 10000 { // Avoid spamming console for large N
@@ -407,13 +516,91 @@ func simulateStepParallelKDTree(bodies []Body, numWorkers int, timeStep, gravita
 }
 
 // --- Initialization --- (Same as before)
-func initializeCircularOrbitSystem(numOrbiting int, centralMass, orbitingMass, minRadius, maxRadius float64) []Body { /* ... */
+func initializeCircularOrbitSystem(numOrbiting int, centralMass, orbitingMass, minRadius, maxRadius float64) []Body {
+	bodies := make([]Body, numOrbiting+1)
+	rand.Seed(time.Now().UnixNano()) // Seed random number generator
+
+	// Central Body (at origin, initially stationary)
+	bodies[0] = Body{
+		Mass:     centralMass,
+		Position: Vector3D{0, 0, 0},
+		Velocity: Vector3D{0, 0, 0},
+	}
+
+	// Orbiting Bodies
+	for i := 1; i <= numOrbiting; i++ {
+		radius := minRadius + rand.Float64()*(maxRadius-minRadius)
+		theta := 2 * math.Pi * rand.Float64()
+		phi := math.Acos(1 - 2*rand.Float64())
+		posX := radius * math.Sin(phi) * math.Cos(theta)
+		posY := radius * math.Sin(phi) * math.Sin(theta)
+		posZ := radius * math.Cos(phi)
+		positionVec := Vector3D{posX, posY, posZ}
+
+		orbitSpeed := math.Sqrt(G * centralMass / radius)
+
+		helperVec := Vector3D{rand.Float64()*2 - 1, rand.Float64()*2 - 1, rand.Float64()*2 - 1}.Normalize()
+		dotProd := positionVec.Normalize().Dot(helperVec) // Use Dot product helper if defined
+		if math.Abs(dotProd) > 0.99 {
+			helperVec = Vector3D{0, 1, 0}
+			if math.Abs(positionVec.Normalize().Y) > 0.99 {
+				helperVec = Vector3D{1, 0, 0}
+			}
+		}
+
+		velDirection := positionVec.Cross(helperVec).Normalize() // Use Cross product helper if defined
+		if velDirection.MagnitudeSquared() < 1e-12 {             // Handle cases where cross product is zero
+			// If position is along Z axis, velocity can be in XY plane
+			if math.Abs(positionVec.X) < 1e-6 && math.Abs(positionVec.Y) < 1e-6 {
+				velDirection = Vector3D{1, 0, 0}
+			} else { // Otherwise, try another perpendicular direction, e.g., cross with Z axis
+				zAxis := Vector3D{0, 0, 1}
+				velDirection = positionVec.Cross(zAxis).Normalize()
+				if velDirection.MagnitudeSquared() < 1e-12 { // If position is along Z axis
+					velDirection = Vector3D{1, 0, 0} // Default to X direction
+				}
+			}
+		}
+
+		velocityVec := velDirection.Scale(orbitSpeed)
+
+		bodies[i] = Body{
+			Mass:     orbitingMass,
+			Position: positionVec,
+			Velocity: velocityVec,
+		}
+	}
+	return bodies
 }
 
 // Implementation omitted for brevity - it is the same as before
 
 // --- Energy Calculation --- (Same as before)
-func calculateTotalEnergy(bodies []Body) float64 { /* ... */ }
+func calculateTotalEnergy(bodies []Body) float64 {
+	// ... (implementation remains the same) ...
+	kineticEnergy := 0.0
+	potentialEnergy := 0.0
+
+	// Kinetic Energy: Sum(0.5 * m * v^2)
+	for i := range bodies {
+		kineticEnergy += 0.5 * bodies[i].Mass * bodies[i].Velocity.MagnitudeSquared()
+	}
+
+	// Potential Energy: Sum(-G * m_i * m_j / |r_i - r_j|) for i < j
+	// NOTE: This calculates the *exact* potential energy. The simulation uses an approximation.
+	// So, the total energy calculated here might not appear well-conserved by the simulation step.
+	for i := 0; i < len(bodies); i++ {
+		for j := i + 1; j < len(bodies); j++ {
+			deltaPos := bodies[i].Position.Subtract(bodies[j].Position)
+			distance := deltaPos.Magnitude()
+			if distance > 0 {
+				potentialEnergy -= G * bodies[i].Mass * bodies[j].Mass / distance
+			}
+		}
+	}
+	return kineticEnergy + potentialEnergy
+
+}
 
 // Implementation omitted for brevity - it is the same as before
 
@@ -475,8 +662,8 @@ func main() {
 // Ensure all helper functions (vector ops, bounding box ops) are included correctly
 // ... (Implementations for Add, Subtract, Scale, etc., here if not shown above) ...
 // Example:
-func (v Vector3D) Add(other Vector3D) Vector3D {
-	return Vector3D{v.X + other.X, v.Y + other.Y, v.Z + other.Z}
-}
+// func (v Vector3D) Add(other Vector3D) Vector3D {
+// 	return Vector3D{v.X + other.X, v.Y + other.Y, v.Z + other.Z}
+// }
 
 // ... Add other vector/bbox methods back in ...

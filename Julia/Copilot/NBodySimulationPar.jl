@@ -1,6 +1,6 @@
 const G = 6.67430e-11 # Gravitational constant
-const DT = 1e-3 # Time step
-const NUM_BODIES = 1000000 # Number of bodies
+const DT = 1e-3 * 3600 * 24 * 365 # Time step
+const NUM_BODIES = 10000 # Number of bodies
 
 struct Body
     x::Float64
@@ -88,7 +88,7 @@ function main()
     initial_energy = calculate_energy(bodies)
     println("Initial energy: $initial_energy")
 
-    for step in 1:1000
+    for step in 1:100
         kick_step!(bodies)
     end
 

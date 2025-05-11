@@ -9,11 +9,11 @@ import (
 
 // --- Constants ---
 const (
-	G                 = 1.0     // Gravitational constant
-	dt                = 0.001   // Time step
-	epsilon           = 0.01    // Softening factor to avoid division by zero/large forces
-	numSteps          = 1000    // Number of simulation steps
-	numOrbitingBodies = 1000000 // Number of orbiting bodies (WARNING: Very large for sequential!)
+	G                 = 1.0   // Gravitational constant
+	dt                = 0.001 // Time step
+	epsilon           = 0.01  // Softening factor to avoid division by zero/large forces
+	numSteps          = 100   // Number of simulation steps
+	numOrbitingBodies = 10000 // Number of orbiting bodies (WARNING: Very large for sequential!)
 	// numOrbitingBodies = 1000 // More reasonable number for testing
 )
 
@@ -220,7 +220,7 @@ func main() {
 
 	for step := 0; step < numSteps; step++ {
 		simulateStep(bodies, dt, G, epsilon)
-		if (step+1)%100 == 0 { // Print progress occasionally
+		if (step+1)%10 == 0 { // Print progress occasionally
 			fmt.Printf("Step %d/%d completed\n", step+1, numSteps)
 		}
 	}

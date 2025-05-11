@@ -226,7 +226,7 @@ end
 
 Create and run an N-body simulation with a central body and a specified number of orbiting bodies.
 """
-function main(num_orbiting=10^6)
+function main(num_orbiting=10000)
     # Parameters
     central_mass = 1.0e30      # Mass of central body (approximately solar mass)
     central_position = [0.0, 0.0, 0.0]
@@ -235,7 +235,7 @@ function main(num_orbiting=10^6)
     min_radius = 1.0e10        # Minimum orbital radius
     max_radius = 5.0e10        # Maximum orbital radius
     dt = 3600.0                # Time step (seconds)
-    num_steps = 1000           # Number of simulation steps
+    num_steps = 100           # Number of simulation steps
     
     println("Initializing system with $num_orbiting orbiting bodies...")
     
@@ -259,7 +259,7 @@ end
 
 Run the simulation with a smaller number of particles for testing.
 """
-function reduced_main(num_orbiting=1000)
+function reduced_main(num_orbiting=10000)
     main(num_orbiting)
 end
 

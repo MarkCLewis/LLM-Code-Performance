@@ -12,11 +12,11 @@ import (
 
 // --- Constants ---
 const (
-	G                 = 1.0     // Gravitational constant
-	dt                = 0.001   // Time step
-	epsilon           = 0.01    // Softening factor
-	numSteps          = 1000    // Number of simulation steps
-	numOrbitingBodies = 1000000 // Number of orbiting bodies (Feasible with N log N)
+	G                 = 1.0    // Gravitational constant
+	dt                = 0.001  // Time step
+	epsilon           = 0.01   // Softening factor
+	numSteps          = 10     // Number of simulation steps
+	numOrbitingBodies = 100000 // Number of orbiting bodies (Feasible with N log N)
 	// numOrbitingBodies = 5000 // Smaller number for quicker testing
 	theta = 0.3 // Barnes-Hut opening angle parameter
 )
@@ -57,6 +57,39 @@ type KDNode struct {
 
 // --- Vector Operations --- (Same as before)
 // Add, Subtract, Scale, MagnitudeSquared, Magnitude, Normalize
+// Add returns the sum of two vectors
+func (v Vector3D) Add(other Vector3D) Vector3D {
+	return Vector3D{v.X + other.X, v.Y + other.Y, v.Z + other.Z}
+}
+
+// Subtract returns the difference between two vectors (v - other)
+func (v Vector3D) Subtract(other Vector3D) Vector3D {
+	return Vector3D{v.X - other.X, v.Y - other.Y, v.Z - other.Z}
+}
+
+// Scale returns the vector scaled by a scalar factor
+func (v Vector3D) Scale(scalar float64) Vector3D {
+	return Vector3D{v.X * scalar, v.Y * scalar, v.Z * scalar}
+}
+
+// MagnitudeSquared returns the squared magnitude (length) of the vector
+func (v Vector3D) MagnitudeSquared() float64 {
+	return v.X*v.X + v.Y*v.Y + v.Z*v.Z
+}
+
+// Magnitude returns the magnitude (length) of the vector
+func (v Vector3D) Magnitude() float64 {
+	return math.Sqrt(v.MagnitudeSquared())
+}
+
+// Normalize returns a unit vector in the same direction
+func (v Vector3D) Normalize() Vector3D {
+	mag := v.Magnitude()
+	if mag == 0 {
+		return Vector3D{0, 0, 0} // Avoid division by zero
+	}
+	return v.Scale(1.0 / mag)
+}
 
 // Component returns the vector component along a given axis (0=X, 1=Y, 2=Z)
 func (v Vector3D) Component(axis int) float64 {
@@ -309,17 +342,17 @@ func simulateStepParallelKDTree(bodies []Body, numWorkers int, timeStep, gravita
 	var wg sync.WaitGroup
 
 	// --- 0. Build k-D Tree (Sequential for simplicity, could be parallelized) ---
-	buildStart := time.Now()
+	// buildStart := time.Now()
 	initialBounds := calculateOverallBounds(bodies)
 	particleIndices := make([]int, n)
 	for i := range particleIndices {
 		particleIndices[i] = i
 	}
 	treeRoot := buildKDTree(particleIndices, bodies, 0, initialBounds)
-	buildDuration := time.Since(buildStart)
+	// buildDuration := time.Since(buildStart)
 
 	// --- 1. Parallel Force/Acceleration Calculation using k-D Tree ---
-	forceStart := time.Now()
+	// forceStart := time.Now()
 	wg.Add(numWorkers)
 	chunkSize := (n + numWorkers - 1) / numWorkers
 	for i := 0; i < numWorkers; i++ {
@@ -335,10 +368,10 @@ func simulateStepParallelKDTree(bodies []Body, numWorkers int, timeStep, gravita
 		go calculateForceKDTreeChunk(treeRoot, bodies, start, end, &wg, thetaValue, gravitationalConstant, softeningFactor)
 	}
 	wg.Wait()
-	forceDuration := time.Since(forceStart)
+	// forceDuration := time.Since(forceStart)
 
 	// --- 2. Parallel Velocity Update (Kick) ---
-	velStart := time.Now()
+	// velStart := time.Now()
 	wg.Add(numWorkers)
 	for i := 0; i < numWorkers; i++ {
 		start := i * chunkSize
@@ -353,10 +386,10 @@ func simulateStepParallelKDTree(bodies []Body, numWorkers int, timeStep, gravita
 		go updateVelocityChunk(bodies, start, end, &wg, timeStep)
 	}
 	wg.Wait()
-	velDuration := time.Since(velStart)
+	// velDuration := time.Since(velStart)
 
 	// --- 3. Parallel Position Update (Step) ---
-	posStart := time.Now()
+	// posStart := time.Now()
 	wg.Add(numWorkers)
 	for i := 0; i < numWorkers; i++ {
 		start := i * chunkSize
@@ -371,7 +404,7 @@ func simulateStepParallelKDTree(bodies []Body, numWorkers int, timeStep, gravita
 		go updatePositionChunk(bodies, start, end, &wg, timeStep)
 	}
 	wg.Wait()
-	posDuration := time.Since(posStart)
+	// posDuration := time.Since(posStart)
 
 	// Optionally return durations for profiling
 	// fmt.Printf(" Step Timings: Build=%.3fs Force=%.3fs Vel=%.3fs Pos=%.3fs\n", buildDuration.Seconds(), forceDuration.Seconds(), velDuration.Seconds(), posDuration.Seconds())

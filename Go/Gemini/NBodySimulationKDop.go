@@ -23,11 +23,10 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"runtime"
 	"sync"
 	"time"
 
-	"github.com/gammazero/go-parallel"
+	"github.com/rudty/go-parallel"
 )
 
 // Body represents a celestial body with mass, position, and velocity.
@@ -44,7 +43,7 @@ type System struct {
 
 // KDNode represents a node in the kD-tree.
 type KDNode struct {
-	bodyIndex int       // Index of the body in this leaf node (-1 if internal)
+	bodyIndex    int // Index of the body in this leaf node (-1 if internal)
 	centerOfMass [3]float64
 	totalMass    float64
 	min          [3]float64 // Minimum bounds of the node
@@ -296,8 +295,8 @@ func kickStepKDTree(s *System, dt float64, chunkSize int) {
 	forces := make([][3]float64, numBodies)
 	root := buildKDTree(s)
 
-	pool := parallel.NewGroup()
-	pool.SetMaxWorkers(runtime.NumCPU())
+	// pool := parallel.NewGroup()
+	// pool.SetMaxWorkers(runtime.NumCPU())
 
 	for i := 0; i < numBodies; i += chunkSize {
 		start := i
@@ -306,14 +305,15 @@ func kickStepKDTree(s *System, dt float64, chunkSize int) {
 			end = numBodies
 		}
 
-		pool.Go(func() error {
+		// pool.Go(func() error {
+		parallel.For(0, numBodies, func(i int) {
 			for j := start; j < end; j++ {
 				calculateForceKDTree(&s.Bodies[j], root, s, &forces[j])
 			}
-			return nil
+			// return nil
 		})
 	}
-	pool.Wait()
+	// pool.Wait()
 
 	// Update velocities
 	for i := 0; i < numBodies; i++ {
@@ -326,19 +326,20 @@ func kickStepKDTree(s *System, dt float64, chunkSize int) {
 // driftStep performs the "drift" part of the first-order kick-step method (parallelized).
 func driftStep(s *System, dt float64) {
 	numBodies := len(s.Bodies)
-	pool := parallel.NewGroup()
-	pool.SetMaxWorkers(runtime.NumCPU())
+	// pool := parallel.NewGroup()
+	// pool.SetMaxWorkers(runtime.NumCPU())
 
 	for i := 0; i < numBodies; i++ {
-		i := i
-		pool.Go(func() error {
+		// i := i
+		// pool.Go(func() error {
+		parallel.For(0, numBodies, func(i int) {
 			s.Bodies[i].Position[0] += s.Bodies[i].Velocity[0] * dt
 			s.Bodies[i].Position[1] += s.Bodies[i].Velocity[1] * dt
 			s.Bodies[i].Position[2] += s.Bodies[i].Velocity[2] * dt
-			return nil
+			// return nil
 		})
 	}
-	pool.Wait()
+	// pool.Wait()
 }
 
 // firstOrderKickStepKDTree performs one full first-order kick-step using the kD-tree with chunking.
@@ -349,13 +350,13 @@ func firstOrderKickStepKDTree(s *System, dt float64, chunkSize int) {
 }
 
 func main() {
-	numOrbitingBodies := 1000000
-	centralMass := 1.989e30    // Mass of the Sun (kg)
-	orbitRadius := 1.496e11    // 1 AU (m)
-	orbitingMass := 5.972e24   // Mass of the Earth (kg)
-	numSteps := 1000
+	numOrbitingBodies := 100000
+	centralMass := 1.989e30  // Mass of the Sun (kg)
+	orbitRadius := 1.496e11  // 1 AU (m)
+	orbitingMass := 5.972e24 // Mass of the Earth (kg)
+	numSteps := 10
 	timeStep := 3600.0 * 24.0 * 7.0 // 1 week in seconds
-	chunkSize := 1000             // Experiment with different chunk sizes
+	chunkSize := 1000               // Experiment with different chunk sizes
 
 	rand.Seed(time.Now().UnixNano())
 

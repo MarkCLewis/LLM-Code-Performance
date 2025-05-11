@@ -54,7 +54,7 @@ void initialize_bodies(Body *bodies, int n) {
         bodies[i].vx = -sin(angle) * sqrt(G * bodies[0].mass / 1e11);
         bodies[i].vy = cos(angle) * sqrt(G * bodies[0].mass / 1e11);
         bodies[i].vz = 0.0;
-        bodies[i].mass = 1e24; // Small body mass
+        bodies[i].mass = 1e24 / n; // Small body mass
     }
 }
 

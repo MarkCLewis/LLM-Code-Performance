@@ -2,7 +2,7 @@ import java.util.Random;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
-public class NBodySimulation {
+public class NBodySimulationPar {
     // Gravitational constant (using an arbitrary value for simulation purposes)
     private static final double G = 6.67430e-11;
     
@@ -44,7 +44,7 @@ public class NBodySimulation {
         }
     }
     
-    public NBodySimulation(int numBodies, double timeStep, int numSteps) {
+    public NBodySimulationPar(int numBodies, double timeStep, int numSteps) {
         this.bodies = new Body[numBodies];
         this.timeStep = timeStep;
         this.numSteps = numSteps;
@@ -112,7 +112,6 @@ public class NBodySimulation {
                 bodies[i] = new Body(x, y, z, vx, vy, vz, bodyMass);
             });
     }
-    }
     
     // Helper function to compute cross product
     private double[] crossProduct(double x1, double y1, double z1, double x2, double y2, double z2) {
@@ -165,8 +164,6 @@ public class NBodySimulation {
             .sum();
             
         return kineticEnergy + potentialEnergy;
-        
-        return totalEnergy;
     }
     
     // Run the simulation using a first-order kick-step method (leapfrog)
@@ -249,16 +246,16 @@ public class NBodySimulation {
     // Main method to run the simulation
     public static void main(String[] args) {
         // Number of bodies (1 central + orbiting bodies)
-        final int NUM_BODIES = 1_000_001; // 1 million small bodies + 1 central body
+        final int NUM_BODIES = 10_001; // 1 million small bodies + 1 central body
         
         // Time step (smaller is more accurate but slower)
-        final double TIME_STEP = 0.01;
+        final double TIME_STEP = 0.001 * 3600*24*365;
         
         // Number of simulation steps
-        final int NUM_STEPS = 1000;
+        final int NUM_STEPS = 100;
         
         // Create simulation
-        NBodySimulation simulation = new NBodySimulation(NUM_BODIES, TIME_STEP, NUM_STEPS);
+        NBodySimulationPar simulation = new NBodySimulationPar(NUM_BODIES, TIME_STEP, NUM_STEPS);
         
         // Central mass (e.g., like a star)
         double centralMass = 1.0e30;

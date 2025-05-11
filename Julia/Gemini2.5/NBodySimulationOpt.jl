@@ -319,65 +319,60 @@ function calculate_total_energy(positions::Matrix{Float64},
     return kinetic_energy + potential_energy
 end
 
-# --- Initialization (Minor tweak for StaticArrays) ---
-function initialize_circular_orbits(N_orbiting::Int, central_mass::Float64; ...) # Same args as before
-    # ... (Initialization logic largely the same) ...
-    # Ensure positions[i, :] gets assigned correctly
-    # Ensure velocities[i, :] gets assigned correctly (e.g., from StaticVector result)
-     # --- Initialization (Minor tweak for StaticArrays) ---
-    function initialize_circular_orbits(N_orbiting::Int,
-                                    central_mass::Float64;
-                                    min_radius::Float64 = 1.0,
-                                    max_radius::Float64 = 10.0,
-                                    orbiting_mass_factor::Float64 = 1e-7
-                                    )::Tuple{Matrix{Float64}, Matrix{Float64}, Vector{Float64}}
-        N_total = N_orbiting + 1
-        # Keep main storage as Matrix/Vector for compatibility, convert to SVector inside loops
-        positions = zeros(Float64, N_total, 3)
-        velocities = zeros(Float64, N_total, 3)
-        masses = zeros(Float64, N_total)
-        masses[1] = central_mass
-        rng = MersenneTwister() # Or use default RNG
 
-        for i in 2:N_total
-            masses[i] = central_mass * orbiting_mass_factor * (0.5 + rand(rng))
-            radius = min_radius + (max_radius - min_radius) * rand(rng)
-            phi = 2.0 * pi * rand(rng)
-            cos_theta = 2.0 * rand(rng) - 1.0
-            sin_theta = sqrt(max(0.0, 1.0 - cos_theta^2))
+function initialize_circular_orbits(N_orbiting::Int,
+                                central_mass::Float64;
+                                min_radius::Float64 = 1.0,
+                                max_radius::Float64 = 10.0,
+                                orbiting_mass_factor::Float64 = 1e-7
+                                )::Tuple{Matrix{Float64}, Matrix{Float64}, Vector{Float64}}
+    N_total = N_orbiting + 1
+    # Keep main storage as Matrix/Vector for compatibility, convert to SVector inside loops
+    positions = zeros(Float64, N_total, 3)
+    velocities = zeros(Float64, N_total, 3)
+    masses = zeros(Float64, N_total)
+    masses[1] = central_mass
+    rng = MersenneTwister() # Or use default RNG
 
-            # Calculate position components
-            x = radius * sin_theta * cos(phi)
-            y = radius * sin_theta * sin(phi)
-            z = radius * cos_theta
-            pos_vec = Vec3(x, y, z) # Create StaticVector
-            positions[i, :] = pos_vec # Assign back to Matrix row
+    for i in 2:N_total
+        masses[i] = central_mass * orbiting_mass_factor * (0.5 + rand(rng))
+        radius = min_radius + (max_radius - min_radius) * rand(rng)
+        phi = 2.0 * pi * rand(rng)
+        cos_theta = 2.0 * rand(rng) - 1.0
+        sin_theta = sqrt(max(0.0, 1.0 - cos_theta^2))
 
-            # Calculate velocity
-            vel_magnitude = sqrt(G * central_mass / max(radius, 1e-9)) # Avoid division by zero
+        # Calculate position components
+        x = radius * sin_theta * cos(phi)
+        y = radius * sin_theta * sin(phi)
+        z = radius * cos_theta
+        pos_vec = Vec3(x, y, z) # Create StaticVector
+        positions[i, :] = pos_vec # Assign back to Matrix row
 
-            # Determine velocity direction (perpendicular)
-            axis_vec = (abs(x) < 1e-9 && abs(y) < 1e-9) ? Vec3(1.0, 0.0, 0.0) : Vec3(0.0, 0.0, 1.0)
+        # Calculate velocity
+        vel_magnitude = sqrt(G * central_mass / max(radius, 1e-9)) # Avoid division by zero
+
+        # Determine velocity direction (perpendicular)
+        axis_vec = (abs(x) < 1e-9 && abs(y) < 1e-9) ? Vec3(1.0, 0.0, 0.0) : Vec3(0.0, 0.0, 1.0)
+        vel_dir_cross = cross(pos_vec, axis_vec)
+
+        if sum(abs2, vel_dir_cross) < 1e-18 # If parallel, try another axis
+            axis_vec = Vec3(0.0, 1.0, 0.0)
             vel_dir_cross = cross(pos_vec, axis_vec)
-
-            if sum(abs2, vel_dir_cross) < 1e-18 # If parallel, try another axis
-                axis_vec = Vec3(0.0, 1.0, 0.0)
-                vel_dir_cross = cross(pos_vec, axis_vec)
-            end
-
-            # Normalize velocity direction
-            norm_vel_dir = norm(vel_dir_cross)
-            vel_dir_normalized = if norm_vel_dir > 1e-9
-                vel_dir_cross / norm_vel_dir
-            else # Fallback for zero position vector etc.
-                normalize(Vec3(rand(rng)-0.5, rand(rng)-0.5, rand(rng)-0.5))
-            end
-
-            vel_vec = vel_magnitude * vel_dir_normalized
-            velocities[i, :] = vel_vec # Assign back to Matrix row
         end
-        return positions, velocities, masses
+
+        # Normalize velocity direction
+        norm_vel_dir = norm(vel_dir_cross)
+        vel_dir_normalized = if norm_vel_dir > 1e-9
+            vel_dir_cross / norm_vel_dir
+        else # Fallback for zero position vector etc.
+            normalize(Vec3(rand(rng)-0.5, rand(rng)-0.5, rand(rng)-0.5))
+        end
+
+        vel_vec = vel_magnitude * vel_dir_normalized
+        velocities[i, :] = vel_vec # Assign back to Matrix row
     end
+    return positions, velocities, masses
+end
 
 # --- Main Simulation Function (Adjusted for pre-allocation) ---
 function run_simulation(num_bodies_orbiting::Int, num_steps::Int, dt::Float64)
@@ -425,7 +420,7 @@ end
 # Remember: julia -t auto script.jl
 
 const NUM_ORBITING_BODIES = 100_000 # Keep reduced for testing
-const NUM_STEPS = 100             # Keep reduced for testing
+const NUM_STEPS = 10             # Keep reduced for testing
 const DT = 0.001
 
 # ... (Interactive check / run call as before) ...

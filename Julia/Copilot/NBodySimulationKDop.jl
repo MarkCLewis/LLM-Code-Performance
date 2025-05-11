@@ -1,8 +1,8 @@
 using Base.Threads
 
 const G = 6.67430e-11 # Gravitational constant
-const DT = 1e-3 # Time step
-const NUM_BODIES = 1000000 # Number of bodies
+const DT = 1e-3 * 3600 * 24 * 365 # Time step
+const NUM_BODIES = 100000 # Number of bodies
 const THETA = 0.3 # Theta value for approximation
 
 struct Body
@@ -141,7 +141,7 @@ function main()
     initial_energy = calculate_energy(bodies)
     println("Initial energy: $initial_energy")
 
-    for step in 1:1000
+    for step in 1:10
         root = build_kdtree(bodies)
         kick_step!(bodies, root)
     end

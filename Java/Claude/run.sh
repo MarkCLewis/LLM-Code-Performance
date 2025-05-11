@@ -1,0 +1,1 @@
+java -XX:MaxGCPauseMillis=200 -Xms4g -Xmx4g -XX:+UseParallelGC -XX:ParallelGCThreads=4 -XX:+UseFMA -XX:SharedArchiveFile=nbody.jsa -Xss256k $1

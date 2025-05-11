@@ -442,7 +442,7 @@ end
 # Now N=1,000,000 might be feasible (though still demanding) due to O(N log N)
 const NUM_ORBITING_BODIES = 100_000 # Reduced from 1M for faster testing
 # const NUM_ORBITING_BODIES = 1_000_000 # Uncomment for full scale (will take time!)
-const NUM_STEPS = 100 # Reduced steps for faster testing
+const NUM_STEPS = 10 # Reduced steps for faster testing
 # const NUM_STEPS = 1000 # Uncomment for full run
 const DT = 0.001
 

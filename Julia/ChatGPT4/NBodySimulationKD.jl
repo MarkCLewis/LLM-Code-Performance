@@ -1,11 +1,11 @@
 using Random
 using Printf
-using Threads
+using Base.Threads
 
 const G = 6.67430e-11
 const DT = 1.0
-const N_BODIES = 1_000_000
-const STEPS = 1000
+const N_BODIES = 100_000
+const STEPS = 10
 const THETA = 0.3
 
 mutable struct Body
@@ -51,7 +51,7 @@ function build_kdtree(bodies::Vector{Body}, depth::Int = 0)::Union{KDNode, Nothi
     sort!(bodies, by = b -> getfield(b, (:x, :y, :z)[axis]))
     mid = length(bodies) ÷ 2
     left = build_kdtree(view(bodies, 1:mid), depth + 1)
-    right = build_kdtree(view(bodies, mid+1:end), depth + 1)
+    right = build_kdtree(view(bodies, mid+1:length(bodies)), depth + 1)
 
     min_bound = mapreduce(b -> (b.x, b.y, b.z), (a, b) -> (min(a[1], b[1]), min(a[2], b[2]), min(a[3], b[3])), bodies)
     max_bound = mapreduce(b -> (b.x, b.y, b.z), (a, b) -> (max(a[1], b[1]), max(a[2], b[2]), max(a[3], b[3])), bodies)
@@ -89,7 +89,7 @@ function compute_force_from_node!(b::Body, node::KDNode)
 end
 
 function compute_forces!(bodies, tree)
-    Threads.@threads for i in eachindex(bodies)
+    @threads for i in eachindex(bodies)
         b = bodies[i]
         b.ax = b.ay = b.az = 0.0
         compute_force_from_node!(b, tree)
@@ -97,7 +97,7 @@ function compute_forces!(bodies, tree)
 end
 
 function update_bodies!(bodies)
-    Threads.@threads for b in bodies
+    @threads for b in bodies
         b.vx += b.ax * DT
         b.vy += b.ay * DT
         b.vz += b.az * DT
@@ -111,7 +111,7 @@ function compute_energy(bodies)
     kinetic = zeros(Float64, length(bodies))
     potential = zeros(Float64, length(bodies))
 
-    Threads.@threads for i in 1:length(bodies)
+    @threads for i in 1:length(bodies)
         bi = bodies[i]
         kinetic[i] = 0.5 * bi.mass * (bi.vx^2 + bi.vy^2 + bi.vz^2)
         pot = 0.0

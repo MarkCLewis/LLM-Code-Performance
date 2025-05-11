@@ -11,11 +11,11 @@ import (
 
 // --- Constants ---
 const (
-	G                 = 1.0     // Gravitational constant
-	dt                = 0.001   // Time step
-	epsilon           = 0.01    // Softening factor to avoid division by zero/large forces
-	numSteps          = 1000    // Number of simulation steps
-	numOrbitingBodies = 1000000 // Number of orbiting bodies (WARNING: Very large even for parallel!)
+	G                 = 1.0   // Gravitational constant
+	dt                = 0.001 // Time step
+	epsilon           = 0.01  // Softening factor to avoid division by zero/large forces
+	numSteps          = 100   // Number of simulation steps
+	numOrbitingBodies = 10000 // Number of orbiting bodies (WARNING: Very large even for parallel!)
 	// numOrbitingBodies = 1000 // More reasonable number for testing
 )
 
@@ -304,7 +304,7 @@ func main() {
 	for step := 0; step < numSteps; step++ {
 		// Pass the pre-allocated accelerations slice
 		simulateStepParallel(bodies, accelerations, numWorkers, dt, G, epsilon)
-		if (step+1)%50 == 0 || step == 0 { // Print progress more often initially/periodically
+		if (step+1)%10 == 0 || step == 0 { // Print progress more often initially/periodically
 			fmt.Printf("Step %d/%d completed (Elapsed: %v)\n", step+1, numSteps, time.Since(simulationStartTime))
 		}
 	}

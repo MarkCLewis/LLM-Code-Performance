@@ -191,12 +191,12 @@ fn initialize_circular_orbits(
     // Add orbiting bodies
     for _ in 0..num_small_bodies {
         // Random radius around the average
-        let r_mag = avg_radius + radius_spread * (rng.gen::<f64>() - 0.5) * 2.0; // Uniform spread
+        let r_mag = avg_radius + radius_spread * (rng.r#gen::<f64>() - 0.5) * 2.0; // Uniform spread
         
         // Random position on a sphere of radius r_mag
         // Use spherical coordinates to distribute somewhat evenly
-        let theta = rng.gen::<f64>() * 2.0 * PI; // Azimuthal angle (0 to 2pi)
-        let phi = (rng.gen::<f64>() * 2.0 - 1.0).acos(); // Polar angle (0 to pi) - ensures uniform spherical distribution
+        let theta = rng.r#gen::<f64>() * 2.0 * PI; // Azimuthal angle (0 to 2pi)
+        let phi = (rng.r#gen::<f64>() * 2.0 - 1.0).acos(); // Polar angle (0 to pi) - ensures uniform spherical distribution
 
         let x = r_mag * phi.sin() * theta.cos();
         let y = r_mag * phi.sin() * theta.sin();
@@ -232,9 +232,9 @@ fn initialize_circular_orbits(
 
 // --- Main Execution ---
 fn main() {
-    let n_small_bodies = 1_000_000;
+    let n_small_bodies = 10_000;
     // let n_small_bodies = 1_000; // Use a smaller number for faster testing
-    let n_steps = 1000;
+    let n_steps = 100;
     let central_mass = 1_000_000.0;
     let small_mass = 1.0;
     let orbital_radius = 100.0;

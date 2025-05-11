@@ -1,0 +1,36 @@
+./benchmark.sh: line 14: ./a.out: No such file or directory
+
+real	0m0.001s
+user	0m0.001s
+sys	0m0.000s
+./benchmark.sh: line 14: ./a.out: No such file or directory
+
+real	0m0.001s
+user	0m0.000s
+sys	0m0.001s
+./benchmark.sh: line 14: ./a.out: No such file or directory
+
+real	0m0.001s
+user	0m0.001s
+sys	0m0.001s
+./benchmark.sh: line 14: ./a.out: No such file or directory
+
+real	0m0.001s
+user	0m0.001s
+sys	0m0.000s
+./benchmark.sh: line 14: ./a.out: No such file or directory
+
+real	0m0.001s
+user	0m0.000s
+sys	0m0.001s
+./benchmark.sh: line 14: ./a.out: No such file or directory
+
+real	0m0.001s
+user	0m0.001s
+sys	0m0.000s
+./benchmark.sh: line 14: ./a.out: No such file or directory
+
+real	0m0.001s
+user	0m0.001s
+sys	0m0.000s
+Claude *.c

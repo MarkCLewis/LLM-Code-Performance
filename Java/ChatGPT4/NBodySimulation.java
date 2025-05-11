@@ -2,8 +2,8 @@ import java.util.Random;
 
 public class NBodySimulation {
 
-    static final int N_BODIES = 1_000_000;
-    static final int STEPS = 1000;
+    static final int N_BODIES = 10_000;
+    static final int STEPS = 100;
     static final double G = 6.67430e-11;
     static final double DT = 1.0;
 

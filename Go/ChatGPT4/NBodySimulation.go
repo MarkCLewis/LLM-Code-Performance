@@ -9,9 +9,9 @@ import (
 
 const (
 	G       = 6.67430e-11
-	DT      = 1.0
-	N       = 1000000
-	STEPS   = 1000
+	DT      = 3600.0 * 24.0
+	N       = 10000
+	STEPS   = 100
 	CENTERM = 1e20
 )
 

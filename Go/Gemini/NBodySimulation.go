@@ -140,11 +140,11 @@ func firstOrderKickStep(s *System, dt float64) {
 }
 
 func main() {
-	numOrbitingBodies := 1000000
-	centralMass := 1.989e30    // Mass of the Sun (kg)
-	orbitRadius := 1.496e11    // 1 AU (m)
-	orbitingMass := 5.972e24   // Mass of the Earth (kg)
-	numSteps := 1000
+	numOrbitingBodies := 10000
+	centralMass := 1.989e30  // Mass of the Sun (kg)
+	orbitRadius := 1.496e11  // 1 AU (m)
+	orbitingMass := 5.972e24 // Mass of the Earth (kg)
+	numSteps := 100
 	timeStep := 3600.0 * 24.0 * 7.0 // 1 week in seconds
 
 	rand.Seed(time.Now().UnixNano())

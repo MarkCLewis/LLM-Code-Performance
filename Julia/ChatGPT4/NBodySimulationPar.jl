@@ -1,11 +1,11 @@
 using Random
 using Printf
-using Threads
+using Base.Threads
 
 const G = 6.67430e-11
 const DT = 1.0
-const N_BODIES = 1_000_000
-const STEPS = 1000
+const N_BODIES = 10_000
+const STEPS = 100
 
 mutable struct Body
     x::Float64
@@ -46,7 +46,7 @@ end
 function compute_forces!(bodies)
     n = length(bodies)
 
-    Threads.@threads for i in 1:n
+    @threads for i in 1:n
         bi = bodies[i]
         ax = ay = az = 0.0
 

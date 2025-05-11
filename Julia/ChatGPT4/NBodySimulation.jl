@@ -2,9 +2,9 @@ using Random
 using Printf
 
 const G = 6.67430e-11
-const DT = 1.0
-const N_BODIES = 1_000_000
-const STEPS = 1000
+const DT = 3600.0 * 24.0
+const N_BODIES = 10_000
+const STEPS = 100
 
 mutable struct Body
     x::Float64

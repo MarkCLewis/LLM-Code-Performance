@@ -534,7 +534,7 @@ Create and run an N-body simulation with a central body and a specified number o
 Uses Barnes-Hut algorithm with theta=0.3.
 Shows thread information and performance metrics.
 """
-function main(num_orbiting=10^6)
+function main(num_orbiting=100000)
     # Barnes-Hut theta parameter
     theta = 0.3
     
@@ -552,7 +552,7 @@ function main(num_orbiting=10^6)
     min_radius = 1.0e10        # Minimum orbital radius
     max_radius = 5.0e10        # Maximum orbital radius
     dt = 3600.0                # Time step (seconds)
-    num_steps = 1000           # Number of simulation steps
+    num_steps = 10           # Number of simulation steps
     
     println("Initializing system with $num_orbiting orbiting bodies...")
     init_start = time()
@@ -579,7 +579,7 @@ end
 
 Run a smaller simulation with profiling enabled to identify bottlenecks.
 """
-function run_with_profile(num_orbiting=10000, num_steps=10)
+function run_with_profile(num_orbiting=100000, num_steps=10)
     # Barnes-Hut theta parameter
     theta = 0.3
     
@@ -612,7 +612,7 @@ end
 
 Run the simulation with a smaller number of particles for testing.
 """
-function reduced_main(num_orbiting=1000)
+function reduced_main(num_orbiting=10)
     main(num_orbiting)
 end
 

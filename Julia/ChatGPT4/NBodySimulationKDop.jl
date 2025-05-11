@@ -6,8 +6,8 @@ const G = 6.67430e-11
 const DT = 1.0
 const THETA = 0.3
 const EPS2 = 1e-10
-const N_BODIES = 1_000_000
-const STEPS = 1000
+const N_BODIES = 100_000
+const STEPS = 10
 
 typealias Vec3 SVector{3, Float64}
 
@@ -34,7 +34,7 @@ function initialize_system(n::Int)
     radius = 1e7
     rng = MersenneTwister(42)
 
-    Threads.@threads for i in 2:n+1
+    @threads for i in 2:n+1
         angle = 2 * pi * i / n
         r = radius * (1.0 + 0.1 * rand(rng))
         x = r * cos(angle)
@@ -90,7 +90,7 @@ function compute_force!(b::Body, node::Union{KDNode, Nothing})
 end
 
 function compute_forces!(bodies::Vector{Body}, tree::KDNode)
-    Threads.@threads for i in eachindex(bodies)
+    @threads for i in eachindex(bodies)
         b = bodies[i]
         b.acc = SVector(0.0, 0.0, 0.0)
         compute_force!(b, tree)
@@ -98,7 +98,7 @@ function compute_forces!(bodies::Vector{Body}, tree::KDNode)
 end
 
 function update_bodies!(bodies::Vector{Body})
-    Threads.@threads for i in eachindex(bodies)
+    @threads for i in eachindex(bodies)
         b = bodies[i]
         b.vel += b.acc * DT
         b.pos += b.vel * DT

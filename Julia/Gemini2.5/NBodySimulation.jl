@@ -266,8 +266,8 @@ end
 # Starting with a smaller number (e.g., 1000) is recommended for testing.
 
 # const NUM_ORBITING_BODIES = 1_000_000 # As requested, but likely infeasible
-const NUM_ORBITING_BODIES = 1000      # More reasonable number for testing
-const NUM_STEPS = 1000
+const NUM_ORBITING_BODIES = 10000      # More reasonable number for testing
+const NUM_STEPS = 100
 const DT = 0.001                      # Time step
 
 # Check if running interactively or as script to avoid running huge sim automatically

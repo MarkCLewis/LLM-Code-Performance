@@ -1,0 +1,15 @@
+[package]
+name = "nbody_simulation_kd"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rand = "0.8"
+rayon = "1.10"
+
+[build]
+rustflags = ["-C", "target-cpu=native"]
+
+[profile.release]
+opt-level = 3      # Default for release, ensure it's set
+lto = true

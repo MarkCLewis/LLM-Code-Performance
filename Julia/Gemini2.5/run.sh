@@ -1,1 +1,1 @@
-julia -t auto -O3 --math-mode=fast your_nbody_script.jl
+julia -t auto -O3 --math-mode=fast --check-bounds=no $1

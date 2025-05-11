@@ -5,15 +5,16 @@ import (
 	"math"
 	"math/rand"
 	"runtime"
+	"sort"
 	"sync"
 	"time"
 )
 
 const (
 	G       = 6.67430e-11
-	DT      = 1.0
+	DT      = 3600.0 * 24.0
 	N       = 100000
-	STEPS   = 100
+	STEPS   = 10
 	THETA   = 0.3
 	CENTERM = 1e20
 )

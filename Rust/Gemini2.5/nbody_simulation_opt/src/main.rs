@@ -295,16 +295,16 @@ fn initialize_solar_system(/* ... */) -> Vec<Body> {
     let mut rng = rand::thread_rng();
     bodies.push(Body { id: 0, position: Vec3d::zero(), velocity: Vec3d::zero(), mass: central_mass });
     for i in 0..num_small_bodies {
-        let r = rng.gen::<f64>().sqrt() * max_radius;
-        let theta_angle = rng.gen::<f64>() * 2.0 * PI;
-        let phi = (rng.gen::<f64>() * 2.0 - 1.0).acos();
+        let r = rng.r#gen::<f64>().sqrt() * max_radius;
+        let theta_angle = rng.r#gen::<f64>() * 2.0 * PI;
+        let phi = (rng.r#gen::<f64>() * 2.0 - 1.0).acos();
         let x = r * phi.sin() * theta_angle.cos(); let y = r * phi.sin() * theta_angle.sin(); let z = r * phi.cos();
         let pos = Vec3d::new(x, y, z);
         let v_mag = if r > 1e-6 { (G * central_mass / r).sqrt() } else { 0.0 };
         let mut vel = Vec3d::new(-pos.y, pos.x, 0.0);
         let vel_norm = vel.norm();
          if vel_norm > 1e-9 { vel = vel * (v_mag / vel_norm); }
-         else { let random_angle = rng.gen::<f64>() * 2.0 * PI; vel = Vec3d::new(v_mag * random_angle.cos(), v_mag * random_angle.sin(), 0.0); }
+         else { let random_angle = rng.r#gen::<f64>() * 2.0 * PI; vel = Vec3d::new(v_mag * random_angle.cos(), v_mag * random_angle.sin(), 0.0); }
         bodies.push(Body { id: i + 1, position: pos, velocity: vel, mass: small_mass });
     }
     bodies
@@ -374,7 +374,7 @@ fn main() {
     // --- Parameters ---
     const NUM_SMALL_BODIES: usize = 100_000; // Keep N manageable for testing
     // ... (other parameters same as before)
-    const NUM_STEPS: usize = 1000;
+    const NUM_STEPS: usize = 10;
     const DT: f64 = 0.001;
 
     println!("--- N-Body Simulation (Optimized Parallel Barnes-Hut k-d Tree) ---");
@@ -388,7 +388,7 @@ fn main() {
     // --- Initialization ---
     println!("Initializing system...");
     let start_init = Instant::now();
-    let mut bodies = initialize_solar_system(NUM_SMALL_BODIES, 1_000_000.0, 1.0, 100.0);
+    let mut bodies = initialize_solar_system(); //NUM_SMALL_BODIES, 1_000_000.0, 1.0, 100.0);
     println!("Initialization took: {:?}", start_init.elapsed());
 
 

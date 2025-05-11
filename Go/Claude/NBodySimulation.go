@@ -9,13 +9,13 @@ import (
 
 // Constants
 const (
-	G             = 6.67430e-11 // Gravitational constant (m^3 kg^-1 s^-2)
-	dt            = 86400.0     // Time step in seconds (1 day)
-	softening     = 1.0e7       // Softening parameter to avoid singularities
-	centralMass   = 1.989e30    // Mass of central body (kg) - roughly solar mass
-	planetMass    = 1.0e24      // Mass of smaller bodies (kg)
-	numSteps      = 1000        // Number of simulation steps
-	numSmallBodies = 1000000    // Number of small bodies
+	G              = 6.67430e-11 // Gravitational constant (m^3 kg^-1 s^-2)
+	dt             = 86400.0     // Time step in seconds (1 day)
+	softening      = 1.0e7       // Softening parameter to avoid singularities
+	centralMass    = 1.989e30    // Mass of central body (kg) - roughly solar mass
+	planetMass     = 1.0e24      // Mass of smaller bodies (kg)
+	numSteps       = 100         // Number of simulation steps
+	numSmallBodies = 10000       // Number of small bodies
 )
 
 // Vector3 represents a 3D vector
@@ -84,16 +84,16 @@ func (v Vector3) Normalized() Vector3 {
 func CalculateGravitationalForce(a, b Body) Vector3 {
 	// Vector from a to b
 	r := b.Position.Sub(a.Position)
-	
+
 	// Squared distance with softening parameter
 	distSqr := r.SqrMagnitude() + softening*softening
-	
+
 	// Force magnitude: F = G*m1*m2/r^2
 	forceMag := G * a.Mass * b.Mass / distSqr
-	
+
 	// Force direction (normalized)
 	direction := r.Normalized()
-	
+
 	// Return the force vector
 	return direction.Mul(forceMag)
 }
@@ -102,7 +102,7 @@ func CalculateGravitationalForce(a, b Body) Vector3 {
 func CalculateAcceleration(bodies []Body, index int) Vector3 {
 	body := bodies[index]
 	totalForce := Vector3{}
-	
+
 	// Sum forces from all other bodies
 	for i, otherBody := range bodies {
 		if i != index {
@@ -110,7 +110,7 @@ func CalculateAcceleration(bodies []Body, index int) Vector3 {
 			totalForce = totalForce.Add(force)
 		}
 	}
-	
+
 	// a = F/m
 	return Vector3{
 		X: totalForce.X / body.Mass,
@@ -123,17 +123,17 @@ func CalculateAcceleration(bodies []Body, index int) Vector3 {
 func KickStep(bodies []Body) {
 	// Temporary array to store accelerations
 	accelerations := make([]Vector3, len(bodies))
-	
+
 	// Calculate accelerations for all bodies
 	for i := range bodies {
 		accelerations[i] = CalculateAcceleration(bodies, i)
 	}
-	
+
 	// Update positions and velocities
 	for i := range bodies {
 		// Update velocity (kick)
 		bodies[i].Velocity = bodies[i].Velocity.Add(accelerations[i].Mul(dt))
-		
+
 		// Update position (drift)
 		bodies[i].Position = bodies[i].Position.Add(bodies[i].Velocity.Mul(dt))
 	}
@@ -143,62 +143,62 @@ func KickStep(bodies []Body) {
 func CalculateTotalEnergy(bodies []Body) float64 {
 	kineticEnergy := 0.0
 	potentialEnergy := 0.0
-	
+
 	// Calculate kinetic energy: KE = 0.5 * m * v^2
 	for _, body := range bodies {
 		kineticEnergy += 0.5 * body.Mass * body.Velocity.SqrMagnitude()
 	}
-	
+
 	// Calculate potential energy: PE = -G * m1 * m2 / r
 	for i := 0; i < len(bodies); i++ {
 		for j := i + 1; j < len(bodies); j++ {
 			r := bodies[i].Position.Sub(bodies[j].Position)
 			distance := r.Magnitude()
-			
+
 			// Avoid division by zero
 			if distance > 0 {
 				potentialEnergy -= G * bodies[i].Mass * bodies[j].Mass / distance
 			}
 		}
 	}
-	
+
 	return kineticEnergy + potentialEnergy
 }
 
 // InitializeSystem creates a system with a central body and smaller bodies on circular orbits
 func InitializeSystem(numSmallBodies int) []Body {
 	bodies := make([]Body, numSmallBodies+1)
-	
+
 	// Set up central body at the origin
 	bodies[0] = Body{
 		Position: Vector3{},
 		Velocity: Vector3{},
 		Mass:     centralMass,
 	}
-	
+
 	rand.Seed(time.Now().UnixNano())
-	
+
 	// Set up smaller bodies in circular orbits around the central body
 	for i := 1; i <= numSmallBodies; i++ {
 		// Random orbital radius between 1 AU and 5 AU (in meters)
 		// 1 AU ≈ 1.496e11 meters
 		radius := (1.0 + 4.0*rand.Float64()) * 1.496e11
-		
+
 		// Random angle for position in the orbit
 		theta := rand.Float64() * 2 * math.Pi
 		phi := (rand.Float64() - 0.5) * 0.1 * math.Pi // Near-planar with some variation
-		
+
 		// Position in spherical coordinates converted to Cartesian
 		x := radius * math.Cos(theta) * math.Cos(phi)
 		y := radius * math.Sin(theta) * math.Cos(phi)
 		z := radius * math.Sin(phi)
-		
+
 		position := Vector3{X: x, Y: y, Z: z}
-		
+
 		// Calculate orbital velocity for a circular orbit
 		// v = sqrt(G*M/r)
 		orbitalSpeed := math.Sqrt(G * centralMass / radius)
-		
+
 		// Velocity vector is perpendicular to the position vector
 		// For a circular orbit in the xy-plane, it's (-y, x, 0) normalized * speed
 		velocity := Vector3{
@@ -206,32 +206,32 @@ func InitializeSystem(numSmallBodies int) []Body {
 			Y: position.X,
 			Z: 0,
 		}.Normalized().Mul(orbitalSpeed)
-		
+
 		bodies[i] = Body{
 			Position: position,
 			Velocity: velocity,
 			Mass:     planetMass,
 		}
 	}
-	
+
 	return bodies
 }
 
 func main() {
 	fmt.Println("Initializing N-body simulation...")
 	startTime := time.Now()
-	
+
 	// Initialize system with one central body and numSmallBodies smaller bodies
 	bodies := InitializeSystem(numSmallBodies)
-	
+
 	fmt.Printf("System initialized with %d bodies\n", len(bodies))
 	fmt.Printf("Central body mass: %.3e kg\n", bodies[0].Mass)
 	fmt.Printf("Small body mass: %.3e kg\n", bodies[1].Mass)
-	
+
 	// Calculate initial energy
 	initialEnergy := CalculateTotalEnergy(bodies)
 	fmt.Printf("Initial total energy: %.6e J\n", initialEnergy)
-	
+
 	// Run simulation for numSteps steps
 	fmt.Printf("Running simulation for %d steps...\n", numSteps)
 	for step := 1; step <= numSteps; step++ {
@@ -240,15 +240,15 @@ func main() {
 		}
 		KickStep(bodies)
 	}
-	
+
 	// Calculate final energy
 	finalEnergy := CalculateTotalEnergy(bodies)
 	fmt.Printf("Final total energy: %.6e J\n", finalEnergy)
-	
+
 	// Calculate energy conservation
 	energyDiff := (finalEnergy - initialEnergy) / initialEnergy
 	fmt.Printf("Energy difference: %.6e (%.6f%%)\n", finalEnergy-initialEnergy, energyDiff*100)
-	
+
 	// Print execution time
 	elapsedTime := time.Since(startTime)
 	fmt.Printf("Simulation completed in %v\n", elapsedTime)

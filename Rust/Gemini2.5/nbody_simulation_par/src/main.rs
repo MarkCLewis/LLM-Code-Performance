@@ -177,9 +177,9 @@ fn initialize_circular_orbits(
 
 // --- Main Execution ---
 fn main() {
-    let n_small_bodies = 1_000_000;
+    let n_small_bodies = 10_000;
     // let n_small_bodies = 5_000; // Use a smaller number for faster testing/debugging
-    let n_steps = 1000;
+    let n_steps = 100;
     let central_mass = 1_000_000.0;
     let small_mass = 1.0;
     let orbital_radius = 100.0;

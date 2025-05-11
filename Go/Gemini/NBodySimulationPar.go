@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"runtime"
 	"sync"
 	"time"
 
-	"github.com/gammazero/go-parallel"
+	"github.com/rudty/go-parallel"
 )
 
 // Body represents a celestial body with mass, position, and velocity.
@@ -121,21 +120,22 @@ func kickStep(s *System, dt float64) {
 	numBodies := len(s.Bodies)
 	forces := make([][3]float64, numBodies)
 
-	pool := parallel.NewGroup()
-	pool.SetMaxWorkers(runtime.NumCPU()) // Limit concurrency to CPU cores
+	// pool := parallel.NewGroup()
+	// pool.SetMaxWorkers(runtime.NumCPU()) // Limit concurrency to CPU cores
 
 	for i := 0; i < numBodies; i++ {
-		i := i // Capture loop variable
-		pool.Go(func() error {
+		// i := i // Capture loop variable
+		// pool.Go(func() error {
+		parallel.For(0, numBodies, func(i int) {
 			for j := 0; j < numBodies; j++ {
 				if i != j {
 					calculateForce(&s.Bodies[i], &s.Bodies[j], &forces[i])
 				}
 			}
-			return nil
+			// return nil
 		})
 	}
-	pool.Wait()
+	// pool.Wait()
 
 	// Update velocities
 	for i := 0; i < numBodies; i++ {
@@ -148,19 +148,19 @@ func kickStep(s *System, dt float64) {
 // driftStep performs the "drift" part of the first-order kick-step method (parallelized with go-parallel).
 func driftStep(s *System, dt float64) {
 	numBodies := len(s.Bodies)
-	pool := parallel.NewGroup()
-	pool.SetMaxWorkers(runtime.NumCPU()) // Limit concurrency to CPU cores
+	// pool := parallel.NewGroup()
+	// pool.SetMaxWorkers(runtime.NumCPU()) // Limit concurrency to CPU cores
 
 	for i := 0; i < numBodies; i++ {
-		i := i // Capture loop variable
-		pool.Go(func() error {
+		// i := i // Capture loop variable
+		// pool.Go(func() error {
+		parallel.For(0, numBodies, func(i int) {
 			s.Bodies[i].Position[0] += s.Bodies[i].Velocity[0] * dt
 			s.Bodies[i].Position[1] += s.Bodies[i].Velocity[1] * dt
 			s.Bodies[i].Position[2] += s.Bodies[i].Velocity[2] * dt
-			return nil
 		})
 	}
-	pool.Wait()
+	// pool.Wait()
 }
 
 // firstOrderKickStep performs one full first-order kick-step (parallelized).
@@ -171,11 +171,11 @@ func firstOrderKickStep(s *System, dt float64) {
 }
 
 func main() {
-	numOrbitingBodies := 1000000
-	centralMass := 1.989e30    // Mass of the Sun (kg)
-	orbitRadius := 1.496e11    // 1 AU (m)
-	orbitingMass := 5.972e24   // Mass of the Earth (kg)
-	numSteps := 1000
+	numOrbitingBodies := 10000
+	centralMass := 1.989e30  // Mass of the Sun (kg)
+	orbitRadius := 1.496e11  // 1 AU (m)
+	orbitingMass := 5.972e24 // Mass of the Earth (kg)
+	numSteps := 100
 	timeStep := 3600.0 * 24.0 * 7.0 // 1 week in seconds
 
 	rand.Seed(time.Now().UnixNano())

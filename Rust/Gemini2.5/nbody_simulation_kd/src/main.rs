@@ -461,8 +461,14 @@ fn calculate_total_energy(bodies: &[Body]) -> f64 {
 
 
 // --- Initialization (Unchanged) ---
-fn initialize_circular_orbits( /* ... */ ) -> Vec<Body> { /* ... Same as before ... */
-    let num_small_bodies: usize = 1_000_000; // Example parameter
+fn initialize_circular_orbits( 
+    num_small_bodies: usize,
+    central_mass: f64,
+    small_mass: f64,
+    avg_radius: f64,
+    radius_spread: f64, // Allow some randomness in orbital radius
+) -> Vec<Body> { /* ... Same as before ... */
+    // let num_small_bodies: usize = 100_000; // Example parameter
     let central_mass: f64 = 1_000_000.0;
     let small_mass: f64 = 1.0;
     let avg_radius: f64 = 100.0;
@@ -477,9 +483,9 @@ fn initialize_circular_orbits( /* ... */ ) -> Vec<Body> { /* ... Same as before 
         .into_par_iter() // Parallel iterator over the count
         .map(|_| {
             let mut rng = rand::thread_rng();
-            let r_mag = avg_radius + radius_spread * (rng.gen::<f64>() - 0.5) * 2.0;
-            let theta = rng.gen::<f64>() * 2.0 * PI;
-            let phi = (rng.gen::<f64>() * 2.0 - 1.0).acos();
+            let r_mag = avg_radius + radius_spread * (rng.r#gen::<f64>() - 0.5) * 2.0;
+            let theta = rng.r#gen::<f64>() * 2.0 * PI;
+            let phi = (rng.r#gen::<f64>() * 2.0 - 1.0).acos();
             let x = r_mag * phi.sin() * theta.cos();
             let y = r_mag * phi.sin() * theta.sin();
             let z = r_mag * phi.cos();
@@ -498,9 +504,9 @@ fn initialize_circular_orbits( /* ... */ ) -> Vec<Body> { /* ... Same as before 
 
 // --- Main Execution ---
 fn main() {
-    let n_small_bodies = 1_000_000;
+    let n_small_bodies = 100_000;
     // let n_small_bodies = 10_000; // Use a smaller number for faster testing
-    let n_steps = 1000;
+    let n_steps = 10;
     let central_mass = 1_000_000.0;
     let small_mass = 1.0;
     let orbital_radius = 100.0;
@@ -526,7 +532,7 @@ fn main() {
     let start_init = Instant::now();
     // Pass parameters directly to initializer
     let mut bodies = initialize_circular_orbits(
-        // n_small_bodies, central_mass, small_mass, orbital_radius, radius_spread
+        n_small_bodies, central_mass, small_mass, orbital_radius, radius_spread
     );
     let init_duration = start_init.elapsed();
     println!("Initialization complete ({:.2?} total bodies) in {:.2?}", bodies.len(), init_duration);

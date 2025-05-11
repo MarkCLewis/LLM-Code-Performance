@@ -1,9 +1,10 @@
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.IntStream;
 
-public class NBodyKDTree {
-    static final int N_BODIES = 1_000_000;
-    static final int STEPS = 1000;
+public class NBodyKDTreeKD {
+    static final int N_BODIES = 100_000;
+    static final int STEPS = 10;
     static final double G = 6.67430e-11;
     static final double DT = 1.0;
     static final double THETA = 0.3;
@@ -122,7 +123,7 @@ public class NBodyKDTree {
     }
 
     static void computeForceFromNode(Body b, KDNode node) {
-        if (node == null || node.mass == 0 || node == b) return;
+        if (node == null || node.mass == 0) return;  // Had to remove  "|| node == b" because it is an illegal comparison.
 
         double dx = node.cmX - b.x;
         double dy = node.cmY - b.y;
