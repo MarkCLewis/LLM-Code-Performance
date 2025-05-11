@@ -27,8 +27,8 @@ public class NBodyKDTreeKD {
         System.out.println("Initializing...");
         initializeSystem(N_BODIES);
         System.out.println("Calculating initial energy...");
-        double initialEnergy = computeEnergy();
-        System.out.printf("Initial energy: %.6e\n", initialEnergy);
+        // double initialEnergy = computeEnergy();
+        // System.out.printf("Initial energy: %.6e\n", initialEnergy);
 
         for (int step = 0; step < STEPS; step++) {
             KDNode tree = buildKDTree(Arrays.asList(bodies), 0);
@@ -39,10 +39,10 @@ public class NBodyKDTreeKD {
             }
         }
 
-        System.out.println("Calculating final energy...");
-        double finalEnergy = computeEnergy();
-        System.out.printf("Final energy: %.6e\n", finalEnergy);
-        System.out.printf("Energy difference: %.6e\n", Math.abs(finalEnergy - initialEnergy));
+        // System.out.println("Calculating final energy...");
+        // double finalEnergy = computeEnergy();
+        // System.out.printf("Final energy: %.6e\n", finalEnergy);
+        // System.out.printf("Energy difference: %.6e\n", Math.abs(finalEnergy - initialEnergy));
     }
 
     static void initializeSystem(int n) {
@@ -156,26 +156,26 @@ public class NBodyKDTreeKD {
         });
     }
 
-    static double computeEnergy() {
-        double kinetic = Arrays.stream(bodies).parallel().mapToDouble(b -> {
-            double v2 = b.vx * b.vx + b.vy * b.vy + b.vz * b.vz;
-            return 0.5 * b.mass * v2;
-        }).sum();
+    // static double computeEnergy() {
+    //     double kinetic = Arrays.stream(bodies).parallel().mapToDouble(b -> {
+    //         double v2 = b.vx * b.vx + b.vy * b.vy + b.vz * b.vz;
+    //         return 0.5 * b.mass * v2;
+    //     }).sum();
 
-        double potential = IntStream.range(0, bodies.length).parallel().mapToDouble(i -> {
-            double pot = 0;
-            Body bi = bodies[i];
-            for (int j = i + 1; j < bodies.length; j++) {
-                Body bj = bodies[j];
-                double dx = bi.x - bj.x;
-                double dy = bi.y - bj.y;
-                double dz = bi.z - bj.z;
-                double dist = Math.sqrt(dx * dx + dy * dy + dz * dz + 1e-10);
-                pot -= G * bi.mass * bj.mass / dist;
-            }
-            return pot;
-        }).sum();
+    //     double potential = IntStream.range(0, bodies.length).parallel().mapToDouble(i -> {
+    //         double pot = 0;
+    //         Body bi = bodies[i];
+    //         for (int j = i + 1; j < bodies.length; j++) {
+    //             Body bj = bodies[j];
+    //             double dx = bi.x - bj.x;
+    //             double dy = bi.y - bj.y;
+    //             double dz = bi.z - bj.z;
+    //             double dist = Math.sqrt(dx * dx + dy * dy + dz * dz + 1e-10);
+    //             pot -= G * bi.mass * bj.mass / dist;
+    //         }
+    //         return pot;
+    //     }).sum();
 
-        return kinetic + potential;
-    }
+    //     return kinetic + potential;
+    // }
 }

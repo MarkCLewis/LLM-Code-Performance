@@ -29,25 +29,25 @@ void initialize_bodies(Body *bodies, int n) {
     }
 }
 
-double calculate_energy(Body *bodies, int n) {
-    double energy = 0.0;
-    #pragma omp parallel for reduction(+:energy)
-    for (int i = 0; i < n; i++) {
-        double kinetic = 0.5 * bodies[i].mass * (bodies[i].vx * bodies[i].vx + bodies[i].vy * bodies[i].vy + bodies[i].vz * bodies[i].vz);
-        double potential = 0.0;
-        for (int j = 0; j < n; j++) {
-            if (i != j) {
-                double dx = bodies[i].x - bodies[j].x;
-                double dy = bodies[i].y - bodies[j].y;
-                double dz = bodies[i].z - bodies[j].z;
-                double distance = sqrt(dx * dx + dy * dy + dz * dz);
-                potential -= G * bodies[i].mass * bodies[j].mass / distance;
-            }
-        }
-        energy += kinetic + 0.5 * potential;
-    }
-    return energy;
-}
+// double calculate_energy(Body *bodies, int n) {
+//     double energy = 0.0;
+//     #pragma omp parallel for reduction(+:energy)
+//     for (int i = 0; i < n; i++) {
+//         double kinetic = 0.5 * bodies[i].mass * (bodies[i].vx * bodies[i].vx + bodies[i].vy * bodies[i].vy + bodies[i].vz * bodies[i].vz);
+//         double potential = 0.0;
+//         for (int j = 0; j < n; j++) {
+//             if (i != j) {
+//                 double dx = bodies[i].x - bodies[j].x;
+//                 double dy = bodies[i].y - bodies[j].y;
+//                 double dz = bodies[i].z - bodies[j].z;
+//                 double distance = sqrt(dx * dx + dy * dy + dz * dz);
+//                 potential -= G * bodies[i].mass * bodies[j].mass / distance;
+//             }
+//         }
+//         energy += kinetic + 0.5 * potential;
+//     }
+//     return energy;
+// }
 
 void kick_step(Body *bodies, int n) {
     #pragma omp parallel for
@@ -83,15 +83,15 @@ int main() {
     Body *bodies = (Body *)malloc(n * sizeof(Body));
     initialize_bodies(bodies, n);
 
-    double initial_energy = calculate_energy(bodies, n);
-    printf("Initial energy: %e\n", initial_energy);
+    // double initial_energy = calculate_energy(bodies, n);
+    // printf("Initial energy: %e\n", initial_energy);
 
     for (int step = 0; step < 100; step++) {
         kick_step(bodies, n);
     }
 
-    double final_energy = calculate_energy(bodies, n);
-    printf("Final energy: %e\n", final_energy);
+    // double final_energy = calculate_energy(bodies, n);
+    // printf("Final energy: %e\n", final_energy);
 
     free(bodies);
     return 0;

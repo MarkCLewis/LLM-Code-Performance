@@ -88,38 +88,38 @@ public class NBodySimulationPar {
         }
     }
 
-    public static double computeEnergy() {
-        double kinetic = java.util.Arrays.stream(bodies).parallel().mapToDouble(b -> {
-            double v2 = b.vx * b.vx + b.vy * b.vy + b.vz * b.vz;
-            return 0.5 * b.mass * v2;
-        }).sum();
+    // public static double computeEnergy() {
+    //     double kinetic = java.util.Arrays.stream(bodies).parallel().mapToDouble(b -> {
+    //         double v2 = b.vx * b.vx + b.vy * b.vy + b.vz * b.vz;
+    //         return 0.5 * b.mass * v2;
+    //     }).sum();
     
-        int n = bodies.length;
-        double potential = java.util.stream.IntStream.range(0, n).parallel().mapToDouble(i -> {
-            Body bi = bodies[i];
-            double sum = 0;
-            for (int j = i + 1; j < n; j++) {
-                Body bj = bodies[j];
-                double dx = bj.x - bi.x;
-                double dy = bj.y - bi.y;
-                double dz = bj.z - bi.z;
-                double dist = Math.sqrt(dx * dx + dy * dy + dz * dz + 1e-10);
-                sum -= G * bi.mass * bj.mass / dist;
-            }
-            return sum;
-        }).sum();
+    //     int n = bodies.length;
+    //     double potential = java.util.stream.IntStream.range(0, n).parallel().mapToDouble(i -> {
+    //         Body bi = bodies[i];
+    //         double sum = 0;
+    //         for (int j = i + 1; j < n; j++) {
+    //             Body bj = bodies[j];
+    //             double dx = bj.x - bi.x;
+    //             double dy = bj.y - bi.y;
+    //             double dz = bj.z - bi.z;
+    //             double dist = Math.sqrt(dx * dx + dy * dy + dz * dz + 1e-10);
+    //             sum -= G * bi.mass * bj.mass / dist;
+    //         }
+    //         return sum;
+    //     }).sum();
     
-        return kinetic + potential;
-    }
+    //     return kinetic + potential;
+    // }
     
     public static void main(String[] args) {
         long start = System.currentTimeMillis();
         System.out.println("Initializing...");
         initializeSystem(N_BODIES);
 
-        System.out.println("Computing initial energy...");
-        double initialEnergy = computeEnergy();
-        System.out.printf("Initial total energy: %.6e\n", initialEnergy);
+        // System.out.println("Computing initial energy...");
+        // double initialEnergy = computeEnergy();
+        // System.out.printf("Initial total energy: %.6e\n", initialEnergy);
 
         for (int step = 0; step < STEPS; step++) {
             computeForces();
@@ -130,10 +130,10 @@ public class NBodySimulationPar {
             }
         }
 
-        System.out.println("Computing final energy...");
-        double finalEnergy = computeEnergy();
-        System.out.printf("Final total energy: %.6e\n", finalEnergy);
-        System.out.printf("Energy difference: %.6e\n", Math.abs(finalEnergy - initialEnergy));
+        // System.out.println("Computing final energy...");
+        // double finalEnergy = computeEnergy();
+        // System.out.printf("Final total energy: %.6e\n", finalEnergy);
+        // System.out.printf("Energy difference: %.6e\n", Math.abs(finalEnergy - initialEnergy));
 
         long end = System.currentTimeMillis();
         System.out.printf("Simulation completed in %.2f seconds.\n", (end - start) / 1000.0);

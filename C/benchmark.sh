@@ -7,13 +7,11 @@ do
   for file in *.c
 	do
     ./build.sh $file
-		if [ $? -ne 0 ]; then
-			echo $author $file >> times.txt
-			for cnt in {1..7}
-			do
-				{ time ./a.out ; } 2>> ../times.txt
-			done
-		fi
+		echo $author $file >> ../times.txt
+		for cnt in {1..7}
+		do
+			{ time ./a.out ; } 2>> ../times.txt
+		done
 	done
   cd ..
 done

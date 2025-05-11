@@ -60,7 +60,7 @@ void allocate_system(System *sys, int N);
 void free_system(System *sys);
 void initialize_system(System *sys, double central_mass, double orbiting_mass,
                        double min_radius, double max_radius, int n_orbiting);
-double calculate_energy(const System *sys); // Still O(N^2) potential for check
+// double calculate_energy(const System *sys); // Still O(N^2) potential for check
 
 // Tree-related functions
 BoundingBox compute_bounding_box(const System *sys, const int *indices, int count);
@@ -104,9 +104,9 @@ int main() {
     initialize_system(&sys, CENTRAL_MASS, ORBITING_MASS, MIN_RADIUS, MAX_RADIUS, N_ORBITING);
     printf("Initialization complete.\n");
 
-    printf("Calculating initial energy (using O(N^2) potential)...\n");
-    double initial_energy = calculate_energy(&sys);
-    printf("Initial System Energy: %.6e\n", initial_energy);
+    // printf("Calculating initial energy (using O(N^2) potential)...\n");
+    // double initial_energy = calculate_energy(&sys);
+    // printf("Initial System Energy: %.6e\n", initial_energy);
 
     printf("Starting simulation with kD-Tree...\n");
     time_t start_time = time(NULL);
@@ -128,15 +128,15 @@ int main() {
     printf("Simulation finished.\n");
     printf("Total simulation time: %.2f seconds\n", total_time);
 
-    printf("Calculating final energy (using O(N^2) potential)...\n");
-    double final_energy = calculate_energy(&sys);
-    printf("Final System Energy:   %.6e\n", final_energy);
+    // printf("Calculating final energy (using O(N^2) potential)...\n");
+    // double final_energy = calculate_energy(&sys);
+    // printf("Final System Energy:   %.6e\n", final_energy);
 
-    double energy_diff = final_energy - initial_energy;
-    double energy_rel_diff = (initial_energy != 0.0) ? (energy_diff / fabs(initial_energy)) : 0.0;
-    printf("Energy Difference (Final - Initial): %.6e\n", energy_diff);
-    printf("Relative Energy Difference: %.6e (%.4f%%)\n", energy_rel_diff, energy_rel_diff * 100.0);
-    printf("NOTE: Energy difference reflects approximation error from tree method.\n");
+    // double energy_diff = final_energy - initial_energy;
+    // double energy_rel_diff = (initial_energy != 0.0) ? (energy_diff / fabs(initial_energy)) : 0.0;
+    // printf("Energy Difference (Final - Initial): %.6e\n", energy_diff);
+    // printf("Relative Energy Difference: %.6e (%.4f%%)\n", energy_rel_diff, energy_rel_diff * 100.0);
+    // printf("NOTE: Energy difference reflects approximation error from tree method.\n");
 
 
     free_system(&sys);
@@ -205,33 +205,33 @@ void initialize_system(System *sys, double central_mass, double orbiting_mass,
 }
 
 // --- O(N^2) Energy Calculation (Unchanged) ---
-double calculate_energy(const System *sys) {
-    double kinetic_energy = 0.0;
-    double potential_energy = 0.0;
+// double calculate_energy(const System *sys) {
+//     double kinetic_energy = 0.0;
+//     double potential_energy = 0.0;
 
-    #pragma omp parallel for reduction(+:kinetic_energy)
-    for (int i = 0; i < sys->N; ++i) {
-        double v_sq = sys->velX[i] * sys->velX[i] +
-                      sys->velY[i] * sys->velY[i] +
-                      sys->velZ[i] * sys->velZ[i];
-        kinetic_energy += 0.5 * sys->mass[i] * v_sq;
-    }
+//     #pragma omp parallel for reduction(+:kinetic_energy)
+//     for (int i = 0; i < sys->N; ++i) {
+//         double v_sq = sys->velX[i] * sys->velX[i] +
+//                       sys->velY[i] * sys->velY[i] +
+//                       sys->velZ[i] * sys->velZ[i];
+//         kinetic_energy += 0.5 * sys->mass[i] * v_sq;
+//     }
 
-    #pragma omp parallel for reduction(+:potential_energy)
-    for (int i = 0; i < sys->N; ++i) {
-        for (int j = i + 1; j < sys->N; ++j) {
-            double dx = sys->posX[j] - sys->posX[i];
-            double dy = sys->posY[j] - sys->posY[i];
-            double dz = sys->posZ[j] - sys->posZ[i];
-            double r_sq = dx * dx + dy * dy + dz * dz;
-            double r = sqrt(r_sq + EPSILON_SQ);
-            if (r > sqrt(EPSILON_SQ)) {
-                 potential_energy -= G * sys->mass[i] * sys->mass[j] / r;
-            }
-        }
-    }
-    return kinetic_energy + potential_energy;
-}
+//     #pragma omp parallel for reduction(+:potential_energy)
+//     for (int i = 0; i < sys->N; ++i) {
+//         for (int j = i + 1; j < sys->N; ++j) {
+//             double dx = sys->posX[j] - sys->posX[i];
+//             double dy = sys->posY[j] - sys->posY[i];
+//             double dz = sys->posZ[j] - sys->posZ[i];
+//             double r_sq = dx * dx + dy * dy + dz * dz;
+//             double r = sqrt(r_sq + EPSILON_SQ);
+//             if (r > sqrt(EPSILON_SQ)) {
+//                  potential_energy -= G * sys->mass[i] * sys->mass[j] / r;
+//             }
+//         }
+//     }
+//     return kinetic_energy + potential_energy;
+// }
 
 // --- kD-Tree Functions ---
 

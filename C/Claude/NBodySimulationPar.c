@@ -26,41 +26,41 @@ double vector_distance(double x1, double y1, double z1, double x2, double y2, do
 }
 
 // Calculate total energy of the system (kinetic + potential)
-double calculate_energy(Body *bodies, int n) {
-    double total_energy = 0.0;
+// double calculate_energy(Body *bodies, int n) {
+//     double total_energy = 0.0;
     
-    #pragma omp parallel
-    {
-        double energy = 0.0;
+//     #pragma omp parallel
+//     {
+//         double energy = 0.0;
         
-        // Calculate kinetic and potential energy
-        #pragma omp for schedule(dynamic)
-        for (int i = 0; i < n; i++) {
-            // Kinetic energy
-            double v_squared = bodies[i].vx * bodies[i].vx + 
-                               bodies[i].vy * bodies[i].vy + 
-                               bodies[i].vz * bodies[i].vz;
-            energy += 0.5 * bodies[i].mass * v_squared;
+//         // Calculate kinetic and potential energy
+//         #pragma omp for schedule(dynamic)
+//         for (int i = 0; i < n; i++) {
+//             // Kinetic energy
+//             double v_squared = bodies[i].vx * bodies[i].vx + 
+//                                bodies[i].vy * bodies[i].vy + 
+//                                bodies[i].vz * bodies[i].vz;
+//             energy += 0.5 * bodies[i].mass * v_squared;
             
-            // Potential energy with all other bodies
-            for (int j = i + 1; j < n; j++) {
-                double distance = vector_distance(
-                    bodies[i].x, bodies[i].y, bodies[i].z,
-                    bodies[j].x, bodies[j].y, bodies[j].z
-                );
-                energy -= G * bodies[i].mass * bodies[j].mass / distance;
-            }
-        }
+//             // Potential energy with all other bodies
+//             for (int j = i + 1; j < n; j++) {
+//                 double distance = vector_distance(
+//                     bodies[i].x, bodies[i].y, bodies[i].z,
+//                     bodies[j].x, bodies[j].y, bodies[j].z
+//                 );
+//                 energy -= G * bodies[i].mass * bodies[j].mass / distance;
+//             }
+//         }
         
-        // Sum up the energy from all threads
-        #pragma omp critical
-        {
-            total_energy += energy;
-        }
-    }
+//         // Sum up the energy from all threads
+//         #pragma omp critical
+//         {
+//             total_energy += energy;
+//         }
+//     }
     
-    return total_energy;
-}
+//     return total_energy;
+// }
 
 // Update velocities of all bodies
 void update_velocities(Body *bodies, int n, double dt) {
@@ -214,9 +214,9 @@ int main() {
     print_system_stats(bodies, N);
     
     // Calculate initial energy
-    printf("Calculating initial energy...\n");
-    double initial_energy = calculate_energy(bodies, N);
-    printf("Initial energy: %.10e\n", initial_energy);
+    // printf("Calculating initial energy...\n");
+    // double initial_energy = calculate_energy(bodies, N);
+    // printf("Initial energy: %.10e\n", initial_energy);
     
     printf("Starting simulation...\n");
     double start_time = omp_get_wtime();
@@ -234,13 +234,13 @@ int main() {
     printf("Simulation completed in %.2f seconds\n", elapsed_time);
     
     // Calculate final energy
-    printf("Calculating final energy...\n");
-    double final_energy = calculate_energy(bodies, N);
-    printf("Final energy: %.10e\n", final_energy);
+    // printf("Calculating final energy...\n");
+    // double final_energy = calculate_energy(bodies, N);
+    // printf("Final energy: %.10e\n", final_energy);
     
-    // Calculate energy error
-    double energy_error = (final_energy - initial_energy) / initial_energy;
-    printf("Relative energy error: %.10e (%.10f%%)\n", energy_error, energy_error * 100.0);
+    // // Calculate energy error
+    // double energy_error = (final_energy - initial_energy) / initial_energy;
+    // printf("Relative energy error: %.10e (%.10f%%)\n", energy_error, energy_error * 100.0);
     
     print_system_stats(bodies, N);
     

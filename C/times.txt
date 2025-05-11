@@ -1,0 +1,368 @@
+ChatGPT4 NBodySimulation.c
+
+real	1m33.422s
+user	1m33.415s
+sys	0m0.000s
+
+real	1m32.389s
+user	1m32.378s
+sys	0m0.004s
+
+real	1m31.920s
+user	1m31.907s
+sys	0m0.004s
+
+real	1m32.373s
+user	1m32.363s
+sys	0m0.004s
+
+real	1m31.859s
+user	1m31.657s
+sys	0m0.080s
+
+real	1m32.188s
+user	1m32.179s
+sys	0m0.004s
+
+real	1m30.278s
+user	1m30.268s
+sys	0m0.004s
+ChatGPT4 NBodySimulationPar.c
+
+real	0m5.219s
+user	3m45.799s
+sys	0m0.368s
+
+real	0m5.609s
+user	3m48.201s
+sys	0m0.208s
+
+real	0m5.519s
+user	3m47.657s
+sys	0m0.117s
+
+real	0m5.248s
+user	3m45.486s
+sys	0m0.244s
+
+real	0m5.463s
+user	3m46.259s
+sys	0m0.249s
+
+real	0m5.437s
+user	3m46.489s
+sys	0m0.305s
+
+real	0m5.441s
+user	3m46.802s
+sys	0m0.064s
+Claude NBodySimulation.c
+
+real	1m30.848s
+user	1m30.839s
+sys	0m0.004s
+
+real	1m30.981s
+user	1m30.970s
+sys	0m0.000s
+
+real	1m29.037s
+user	1m29.028s
+sys	0m0.004s
+
+real	1m30.747s
+user	1m30.742s
+sys	0m0.000s
+
+real	1m29.714s
+user	1m29.707s
+sys	0m0.004s
+
+real	1m30.569s
+user	1m30.561s
+sys	0m0.004s
+
+real	1m30.620s
+user	1m30.612s
+sys	0m0.004s
+Claude NBodySimulationKD.c
+
+real	0m4.768s
+user	2m50.465s
+sys	0m0.527s
+
+real	0m4.677s
+user	2m49.102s
+sys	0m0.804s
+
+real	0m4.719s
+user	2m49.861s
+sys	0m0.685s
+
+real	0m4.767s
+user	2m50.003s
+sys	0m0.999s
+
+real	0m4.713s
+user	2m48.392s
+sys	0m0.779s
+
+real	0m4.723s
+user	2m49.020s
+sys	0m0.512s
+
+real	0m4.675s
+user	2m49.613s
+sys	0m0.662s
+Claude NBodySimulationPar.c
+
+real	0m4.395s
+user	3m27.086s
+sys	0m0.056s
+
+real	0m4.378s
+user	3m26.283s
+sys	0m0.040s
+
+real	0m4.375s
+user	3m26.379s
+sys	0m0.064s
+
+real	0m4.392s
+user	3m26.698s
+sys	0m0.036s
+
+real	0m4.352s
+user	3m25.420s
+sys	0m0.040s
+
+real	0m4.399s
+user	3m26.194s
+sys	0m0.044s
+
+real	0m4.432s
+user	3m28.673s
+sys	0m0.040s
+Copilot NBodySimulation.c
+
+real	0m0.001s
+user	0m0.001s
+sys	0m0.000s
+
+real	0m0.001s
+user	0m0.001s
+sys	0m0.000s
+
+real	0m0.001s
+user	0m0.001s
+sys	0m0.000s
+
+real	0m0.001s
+user	0m0.001s
+sys	0m0.000s
+
+real	0m0.001s
+user	0m0.000s
+sys	0m0.001s
+
+real	0m0.001s
+user	0m0.001s
+sys	0m0.000s
+
+real	0m0.001s
+user	0m0.001s
+sys	0m0.000s
+Copilot NBodySimulationKD.c
+./benchmark.sh: line 11: 794379 Segmentation fault      (core dumped) ./a.out
+
+real	0m0.574s
+user	0m0.160s
+sys	0m0.455s
+./benchmark.sh: line 11: 794506 Segmentation fault      (core dumped) ./a.out
+
+real	0m0.634s
+user	0m0.229s
+sys	0m0.474s
+./benchmark.sh: line 11: 794635 Segmentation fault      (core dumped) ./a.out
+
+real	0m0.662s
+user	0m0.155s
+sys	0m0.525s
+./benchmark.sh: line 11: 794759 Segmentation fault      (core dumped) ./a.out
+
+real	0m0.634s
+user	0m0.184s
+sys	0m0.494s
+./benchmark.sh: line 11: 794899 Segmentation fault      (core dumped) ./a.out
+
+real	0m0.634s
+user	0m0.125s
+sys	0m0.527s
+./benchmark.sh: line 11: 795023 Segmentation fault      (core dumped) ./a.out
+
+real	0m0.598s
+user	0m0.222s
+sys	0m0.414s
+./benchmark.sh: line 11: 795143 Segmentation fault      (core dumped) ./a.out
+
+real	0m0.617s
+user	0m0.169s
+sys	0m0.479s
+Copilot NBodySimulationPar.c
+
+real	0m5.314s
+user	3m47.061s
+sys	0m0.113s
+
+real	0m5.382s
+user	3m44.235s
+sys	0m0.156s
+
+real	0m5.230s
+user	3m45.271s
+sys	0m0.157s
+
+real	0m5.181s
+user	3m44.467s
+sys	0m0.097s
+
+real	0m5.472s
+user	3m47.924s
+sys	0m0.132s
+
+real	0m5.249s
+user	3m45.305s
+sys	0m0.089s
+
+real	0m5.180s
+user	3m43.637s
+sys	0m0.097s
+Gemini NBodySimulation.c
+
+real	6m40.012s
+user	6m39.986s
+sys	0m0.000s
+
+real	6m38.333s
+user	6m38.308s
+sys	0m0.005s
+
+real	6m37.635s
+user	6m37.610s
+sys	0m0.005s
+
+real	6m38.454s
+user	6m38.427s
+sys	0m0.005s
+
+real	7m12.161s
+user	7m12.108s
+sys	0m0.028s
+
+real	7m7.258s
+user	7m7.238s
+sys	0m0.004s
+
+real	6m58.971s
+user	6m58.949s
+sys	0m0.004s
+Gemini NBodySimulationOPT.c
+
+real	0m2.571s
+user	0m48.104s
+sys	0m0.352s
+
+real	0m2.439s
+user	0m47.254s
+sys	0m0.153s
+
+real	0m2.508s
+user	0m47.638s
+sys	0m0.202s
+
+real	0m2.403s
+user	0m47.477s
+sys	0m0.392s
+
+real	0m2.476s
+user	0m47.898s
+sys	0m0.095s
+
+real	0m2.468s
+user	0m48.227s
+sys	0m0.125s
+
+real	0m2.547s
+user	0m48.309s
+sys	0m0.297s
+Gemini NBodySimulationPar.c
+
+real	0m21.671s
+user	15m55.095s
+sys	0m0.256s
+
+real	0m22.322s
+user	15m50.123s
+sys	0m0.392s
+
+real	0m22.253s
+user	15m52.018s
+sys	0m0.436s
+
+real	0m22.089s
+user	15m48.924s
+sys	0m0.404s
+
+real	0m22.660s
+user	15m51.453s
+sys	0m0.747s
+
+real	0m22.647s
+user	15m49.289s
+sys	0m0.403s
+
+real	0m21.431s
+user	15m47.898s
+sys	0m0.384s
+Gemini2.5 NBodySimulation.c
+
+real	0m45.269s
+user	0m45.255s
+sys	0m0.012s
+
+real	0m45.599s
+user	0m45.589s
+sys	0m0.008s
+
+real	0m45.823s
+user	0m45.812s
+sys	0m0.008s
+
+real	0m45.579s
+user	0m45.568s
+sys	0m0.008s
+
+real	0m46.222s
+user	0m46.211s
+sys	0m0.008s
+
+real	0m45.581s
+user	0m45.570s
+sys	0m0.009s
+
+real	0m46.733s
+user	0m46.726s
+sys	0m0.005s
+Gemini2.5 NBodySimulationKD.c
+
+real	5m28.276s
+user	225m21.252s
+sys	0m40.030s
+
+real	5m24.891s
+user	222m47.597s
+sys	0m41.647s
+
+real	5m22.979s
+user	219m57.728s
+sys	0m41.952s

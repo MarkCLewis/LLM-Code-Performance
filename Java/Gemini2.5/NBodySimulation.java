@@ -132,35 +132,35 @@ public class NBodySimulation {
      * This is an O(N^2) calculation.
      * @return The total energy of the system.
      */
-    public static double calculateTotalEnergy() {
-        double kineticEnergy = 0.0;
-        double potentialEnergy = 0.0;
+    // public static double calculateTotalEnergy() {
+    //     double kineticEnergy = 0.0;
+    //     double potentialEnergy = 0.0;
 
-        // --- Kinetic Energy ---
-        // KE = sum(0.5 * m_i * v_i^2)
-        for (int i = 0; i < N; i++) {
-            double vSq = velX[i] * velX[i] + velY[i] * velY[i] + velZ[i] * velZ[i];
-            kineticEnergy += 0.5 * masses[i] * vSq;
-        }
+    //     // --- Kinetic Energy ---
+    //     // KE = sum(0.5 * m_i * v_i^2)
+    //     for (int i = 0; i < N; i++) {
+    //         double vSq = velX[i] * velX[i] + velY[i] * velY[i] + velZ[i] * velZ[i];
+    //         kineticEnergy += 0.5 * masses[i] * vSq;
+    //     }
 
-        // --- Potential Energy ---
-        // PE = sum_{i < j} (-G * m_i * m_j / |r_i - r_j|)
-        // This requires iterating through all unique pairs (O(N^2))
-        for (int i = 0; i < N; i++) {
-            for (int j = i + 1; j < N; j++) { // Start j from i+1 to avoid double counting and self-interaction
-                double dx = posX[i] - posX[j];
-                double dy = posY[i] - posY[j];
-                double dz = posZ[i] - posZ[j];
+    //     // --- Potential Energy ---
+    //     // PE = sum_{i < j} (-G * m_i * m_j / |r_i - r_j|)
+    //     // This requires iterating through all unique pairs (O(N^2))
+    //     for (int i = 0; i < N; i++) {
+    //         for (int j = i + 1; j < N; j++) { // Start j from i+1 to avoid double counting and self-interaction
+    //             double dx = posX[i] - posX[j];
+    //             double dy = posY[i] - posY[j];
+    //             double dz = posZ[i] - posZ[j];
 
-                double distSq = dx * dx + dy * dy + dz * dz;
-                // Use softening factor in distance calculation for potential energy as well for consistency
-                double dist = Math.sqrt(distSq + SOFTENING_SQUARED);
+    //             double distSq = dx * dx + dy * dy + dz * dz;
+    //             // Use softening factor in distance calculation for potential energy as well for consistency
+    //             double dist = Math.sqrt(distSq + SOFTENING_SQUARED);
 
-                potentialEnergy -= G * masses[i] * masses[j] / dist;
-            }
-        }
-        return kineticEnergy + potentialEnergy;
-    }
+    //             potentialEnergy -= G * masses[i] * masses[j] / dist;
+    //         }
+    //     }
+    //     return kineticEnergy + potentialEnergy;
+    // }
 
     /**
      * Performs a single simulation time step using the first-order Kick-Step method.
@@ -313,12 +313,12 @@ public class NBodySimulation {
 
 
         // 2. Calculate Initial Energy
-        System.out.println("Calculating initial energy...");
-        long energyStartTime = System.currentTimeMillis();
-        double initialEnergy = calculateTotalEnergy();
-        long energyEndTime = System.currentTimeMillis();
-        System.out.printf("Initial Total Energy: %.8e (Calculation time: %s)\n",
-                          initialEnergy, formatDuration(energyEndTime - energyStartTime));
+        // System.out.println("Calculating initial energy...");
+        // long energyStartTime = System.currentTimeMillis();
+        // double initialEnergy = calculateTotalEnergy();
+        // long energyEndTime = System.currentTimeMillis();
+        // System.out.printf("Initial Total Energy: %.8e (Calculation time: %s)\n",
+        //                   initialEnergy, formatDuration(energyEndTime - energyStartTime));
 
 
         // 3. Run Simulation Loop
@@ -363,34 +363,34 @@ public class NBodySimulation {
 
 
         // 4. Calculate Final Energy
-        System.out.println("Calculating final energy...");
-        energyStartTime = System.currentTimeMillis();
-        double finalEnergy = calculateTotalEnergy();
-        energyEndTime = System.currentTimeMillis();
-        System.out.printf("Final Total Energy:   %.8e (Calculation time: %s)\n",
-                          finalEnergy, formatDuration(energyEndTime - energyStartTime));
+        // System.out.println("Calculating final energy...");
+        // energyStartTime = System.currentTimeMillis();
+        // double finalEnergy = calculateTotalEnergy();
+        // energyEndTime = System.currentTimeMillis();
+        // System.out.printf("Final Total Energy:   %.8e (Calculation time: %s)\n",
+        //                   finalEnergy, formatDuration(energyEndTime - energyStartTime));
 
 
         // 5. Verify Energy Conservation
-        System.out.println("-------------------- Energy Check --------------------");
-        System.out.printf("Initial Energy:        %.8e\n", initialEnergy);
-        System.out.printf("Final Energy:          %.8e\n", finalEnergy);
-        // Avoid division by zero if initial energy is zero (unlikely but possible)
-        if (Math.abs(initialEnergy) < 1e-15) {
-             System.out.printf("Energy Change (Absolute): %.4e\n", finalEnergy - initialEnergy);
-        } else {
-            double relativeEnergyChange = Math.abs((finalEnergy - initialEnergy) / initialEnergy);
-            System.out.printf("Relative Energy Change: %.4e (%.4f%%)\n", relativeEnergyChange, relativeEnergyChange * 100.0);
-             // Assess conservation based on relative change
-             if (relativeEnergyChange < 1e-3) { // Threshold depends on dt, steps, softening
-                  System.out.println("Energy conservation appears reasonable for this method and parameters.");
-             } else if (relativeEnergyChange < 1e-1){
-                 System.out.println("Noticeable energy drift detected. Consider reducing dt or using a higher-order integrator.");
-             } else {
-                  System.out.println("WARNING: Significant energy drift detected! Accuracy is questionable.");
-                  System.out.println("         This might be due to large dt, insufficient softening, or limitations of the 1st-order method.");
-             }
-        }
+        // System.out.println("-------------------- Energy Check --------------------");
+        // System.out.printf("Initial Energy:        %.8e\n", initialEnergy);
+        // System.out.printf("Final Energy:          %.8e\n", finalEnergy);
+        // // Avoid division by zero if initial energy is zero (unlikely but possible)
+        // if (Math.abs(initialEnergy) < 1e-15) {
+        //      System.out.printf("Energy Change (Absolute): %.4e\n", finalEnergy - initialEnergy);
+        // } else {
+        //     double relativeEnergyChange = Math.abs((finalEnergy - initialEnergy) / initialEnergy);
+        //     System.out.printf("Relative Energy Change: %.4e (%.4f%%)\n", relativeEnergyChange, relativeEnergyChange * 100.0);
+        //      // Assess conservation based on relative change
+        //      if (relativeEnergyChange < 1e-3) { // Threshold depends on dt, steps, softening
+        //           System.out.println("Energy conservation appears reasonable for this method and parameters.");
+        //      } else if (relativeEnergyChange < 1e-1){
+        //          System.out.println("Noticeable energy drift detected. Consider reducing dt or using a higher-order integrator.");
+        //      } else {
+        //           System.out.println("WARNING: Significant energy drift detected! Accuracy is questionable.");
+        //           System.out.println("         This might be due to large dt, insufficient softening, or limitations of the 1st-order method.");
+        //      }
+        // }
         System.out.println("----------------------------------------------------");
         System.out.println("Simulation Finished.");
     }

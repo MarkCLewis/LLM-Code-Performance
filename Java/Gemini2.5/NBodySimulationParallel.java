@@ -99,35 +99,35 @@ public class NBodySimulationParallel {
      * Calculates the total energy (Kinetic + Potential) using parallel streams.
      * @return The total energy of the system.
      */
-    public static double calculateTotalEnergyParallel() {
-        // --- Kinetic Energy (Parallel Summation) ---
-        double kineticEnergy = IntStream.range(0, N).parallel()
-            .mapToDouble(i -> {
-                double vSq = velX[i] * velX[i] + velY[i] * velY[i] + velZ[i] * velZ[i];
-                return 0.5 * masses[i] * vSq;
-            })
-            .sum();
+    // public static double calculateTotalEnergyParallel() {
+    //     // --- Kinetic Energy (Parallel Summation) ---
+    //     double kineticEnergy = IntStream.range(0, N).parallel()
+    //         .mapToDouble(i -> {
+    //             double vSq = velX[i] * velX[i] + velY[i] * velY[i] + velZ[i] * velZ[i];
+    //             return 0.5 * masses[i] * vSq;
+    //         })
+    //         .sum();
 
-        // --- Potential Energy (Parallel Summation over pairs i < j) ---
-        // Parallelize the outer loop (i), calculate sum for j > i sequentially within the thread
-        double potentialEnergy = IntStream.range(0, N).parallel()
-            .mapToDouble(i -> {
-                double pe_i = 0.0; // Potential energy contribution related to body i
-                // Inner loop iterates j > i
-                for (int j = i + 1; j < N; j++) {
-                    double dx = posX[i] - posX[j];
-                    double dy = posY[i] - posY[j];
-                    double dz = posZ[i] - posZ[j];
-                    double distSq = dx * dx + dy * dy + dz * dz;
-                    double dist = Math.sqrt(distSq + SOFTENING_SQUARED);
-                    pe_i -= G * masses[i] * masses[j] / dist;
-                }
-                return pe_i;
-            })
-            .sum(); // Sum up contributions from all i
+    //     // --- Potential Energy (Parallel Summation over pairs i < j) ---
+    //     // Parallelize the outer loop (i), calculate sum for j > i sequentially within the thread
+    //     double potentialEnergy = IntStream.range(0, N).parallel()
+    //         .mapToDouble(i -> {
+    //             double pe_i = 0.0; // Potential energy contribution related to body i
+    //             // Inner loop iterates j > i
+    //             for (int j = i + 1; j < N; j++) {
+    //                 double dx = posX[i] - posX[j];
+    //                 double dy = posY[i] - posY[j];
+    //                 double dz = posZ[i] - posZ[j];
+    //                 double distSq = dx * dx + dy * dy + dz * dz;
+    //                 double dist = Math.sqrt(distSq + SOFTENING_SQUARED);
+    //                 pe_i -= G * masses[i] * masses[j] / dist;
+    //             }
+    //             return pe_i;
+    //         })
+    //         .sum(); // Sum up contributions from all i
 
-        return kineticEnergy + potentialEnergy;
-    }
+    //     return kineticEnergy + potentialEnergy;
+    // }
 
     /**
      * Performs a single simulation time step using parallel streams.
@@ -260,12 +260,12 @@ public class NBodySimulationParallel {
 
 
         // 2. Calculate Initial Energy (Parallel)
-        System.out.println("Calculating initial energy (parallel)...");
-        long energyStartTime = System.currentTimeMillis();
-        double initialEnergy = calculateTotalEnergyParallel(); // Use parallel version
-        long energyEndTime = System.currentTimeMillis();
-        System.out.printf("Initial Total Energy: %.8e (Calculation time: %s)\n",
-                          initialEnergy, formatDuration(energyEndTime - energyStartTime));
+        // System.out.println("Calculating initial energy (parallel)...");
+        // long energyStartTime = System.currentTimeMillis();
+        // double initialEnergy = calculateTotalEnergyParallel(); // Use parallel version
+        // long energyEndTime = System.currentTimeMillis();
+        // System.out.printf("Initial Total Energy: %.8e (Calculation time: %s)\n",
+        //                   initialEnergy, formatDuration(energyEndTime - energyStartTime));
 
 
         // 3. Run Simulation Loop (Parallel Steps)
@@ -301,27 +301,27 @@ public class NBodySimulationParallel {
 
 
         // 4. Calculate Final Energy (Parallel)
-        System.out.println("Calculating final energy (parallel)...");
-        energyStartTime = System.currentTimeMillis();
-        double finalEnergy = calculateTotalEnergyParallel(); // Use parallel version
-        energyEndTime = System.currentTimeMillis();
-        System.out.printf("Final Total Energy:   %.8e (Calculation time: %s)\n",
-                          finalEnergy, formatDuration(energyEndTime - energyStartTime));
+        // System.out.println("Calculating final energy (parallel)...");
+        // energyStartTime = System.currentTimeMillis();
+        // double finalEnergy = calculateTotalEnergyParallel(); // Use parallel version
+        // energyEndTime = System.currentTimeMillis();
+        // System.out.printf("Final Total Energy:   %.8e (Calculation time: %s)\n",
+        //                   finalEnergy, formatDuration(energyEndTime - energyStartTime));
 
 
-        // 5. Verify Energy Conservation (Same logic as before)
-        System.out.println("-------------------- Energy Check --------------------");
-        System.out.printf("Initial Energy:        %.8e\n", initialEnergy);
-        System.out.printf("Final Energy:          %.8e\n", finalEnergy);
-        if (Math.abs(initialEnergy) < 1e-15) {
-            System.out.printf("Energy Change (Absolute): %.4e\n", finalEnergy - initialEnergy);
-        } else {
-            double relativeEnergyChange = Math.abs((finalEnergy - initialEnergy) / initialEnergy);
-            System.out.printf("Relative Energy Change: %.4e (%.4f%%)\n", relativeEnergyChange, relativeEnergyChange * 100.0);
-            if (relativeEnergyChange < 1e-3) System.out.println("Energy conservation appears reasonable.");
-            else if (relativeEnergyChange < 1e-1) System.out.println("Noticeable energy drift detected.");
-            else System.out.println("WARNING: Significant energy drift detected!");
-        }
+        // // 5. Verify Energy Conservation (Same logic as before)
+        // System.out.println("-------------------- Energy Check --------------------");
+        // System.out.printf("Initial Energy:        %.8e\n", initialEnergy);
+        // System.out.printf("Final Energy:          %.8e\n", finalEnergy);
+        // if (Math.abs(initialEnergy) < 1e-15) {
+        //     System.out.printf("Energy Change (Absolute): %.4e\n", finalEnergy - initialEnergy);
+        // } else {
+        //     double relativeEnergyChange = Math.abs((finalEnergy - initialEnergy) / initialEnergy);
+        //     System.out.printf("Relative Energy Change: %.4e (%.4f%%)\n", relativeEnergyChange, relativeEnergyChange * 100.0);
+        //     if (relativeEnergyChange < 1e-3) System.out.println("Energy conservation appears reasonable.");
+        //     else if (relativeEnergyChange < 1e-1) System.out.println("Noticeable energy drift detected.");
+        //     else System.out.println("WARNING: Significant energy drift detected!");
+        // }
         System.out.println("----------------------------------------------------");
         System.out.println("Parallel Simulation Finished.");
     }

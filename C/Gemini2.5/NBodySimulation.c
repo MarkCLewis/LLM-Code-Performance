@@ -33,7 +33,7 @@ void allocate_system(System *sys, int N);
 void free_system(System *sys);
 void initialize_system(System *sys, double central_mass, double orbiting_mass,
                        double min_radius, double max_radius, int n_orbiting);
-double calculate_energy(const System *sys);
+// double calculate_energy(const System *sys);
 void calculate_forces(const System *sys, double *forceX, double *forceY, double *forceZ);
 void simulate_step(System *sys);
 
@@ -57,9 +57,9 @@ int main() {
     printf("Initialization complete.\n");
 
     // Calculate initial energy
-    printf("Calculating initial energy...\n");
-    double initial_energy = calculate_energy(&sys);
-    printf("Initial System Energy: %.6e\n", initial_energy);
+    // printf("Calculating initial energy...\n");
+    // double initial_energy = calculate_energy(&sys);
+    // printf("Initial System Energy: %.6e\n", initial_energy);
 
     // --- Simulation Loop ---
     printf("Starting simulation...\n");
@@ -83,15 +83,15 @@ int main() {
     printf("Total simulation time: %.2f seconds\n", total_time);
 
     // Calculate final energy
-    printf("Calculating final energy...\n");
-    double final_energy = calculate_energy(&sys);
-    printf("Final System Energy:   %.6e\n", final_energy);
+    // printf("Calculating final energy...\n");
+    // double final_energy = calculate_energy(&sys);
+    // printf("Final System Energy:   %.6e\n", final_energy);
 
-    // Verify energy conservation
-    double energy_diff = final_energy - initial_energy;
-    double energy_rel_diff = (initial_energy != 0.0) ? (energy_diff / initial_energy) : 0.0;
-    printf("Energy Difference (Final - Initial): %.6e\n", energy_diff);
-    printf("Relative Energy Difference: %.6e (%.4f%%)\n", energy_rel_diff, energy_rel_diff * 100.0);
+    // // Verify energy conservation
+    // double energy_diff = final_energy - initial_energy;
+    // double energy_rel_diff = (initial_energy != 0.0) ? (energy_diff / initial_energy) : 0.0;
+    // printf("Energy Difference (Final - Initial): %.6e\n", energy_diff);
+    // printf("Relative Energy Difference: %.6e (%.4f%%)\n", energy_rel_diff, energy_rel_diff * 100.0);
 
     // Clean up
     free_system(&sys);
@@ -186,38 +186,38 @@ void initialize_system(System *sys, double central_mass, double orbiting_mass,
 }
 
 // Calculate the total energy (Kinetic + Potential) of the system
-double calculate_energy(const System *sys) {
-    double kinetic_energy = 0.0;
-    double potential_energy = 0.0;
+// double calculate_energy(const System *sys) {
+//     double kinetic_energy = 0.0;
+//     double potential_energy = 0.0;
 
-    // Kinetic Energy: Sum(0.5 * m_i * v_i^2)
-    for (int i = 0; i < sys->N; ++i) {
-        double v_sq = sys->velX[i] * sys->velX[i] +
-                      sys->velY[i] * sys->velY[i] +
-                      sys->velZ[i] * sys->velZ[i];
-        kinetic_energy += 0.5 * sys->mass[i] * v_sq;
-    }
+//     // Kinetic Energy: Sum(0.5 * m_i * v_i^2)
+//     for (int i = 0; i < sys->N; ++i) {
+//         double v_sq = sys->velX[i] * sys->velX[i] +
+//                       sys->velY[i] * sys->velY[i] +
+//                       sys->velZ[i] * sys->velZ[i];
+//         kinetic_energy += 0.5 * sys->mass[i] * v_sq;
+//     }
 
-    // Potential Energy: Sum(-G * m_i * m_j / |r_i - r_j|) for i < j
-    for (int i = 0; i < sys->N; ++i) {
-        for (int j = i + 1; j < sys->N; ++j) {
-            double dx = sys->posX[j] - sys->posX[i];
-            double dy = sys->posY[j] - sys->posY[i];
-            double dz = sys->posZ[j] - sys->posZ[i];
+//     // Potential Energy: Sum(-G * m_i * m_j / |r_i - r_j|) for i < j
+//     for (int i = 0; i < sys->N; ++i) {
+//         for (int j = i + 1; j < sys->N; ++j) {
+//             double dx = sys->posX[j] - sys->posX[i];
+//             double dy = sys->posY[j] - sys->posY[i];
+//             double dz = sys->posZ[j] - sys->posZ[i];
 
-            double r_sq = dx * dx + dy * dy + dz * dz;
-            double r = sqrt(r_sq + EPSILON_SQ); // Add softening
+//             double r_sq = dx * dx + dy * dy + dz * dz;
+//             double r = sqrt(r_sq + EPSILON_SQ); // Add softening
 
-            if (r > sqrt(EPSILON_SQ)) { // Avoid potential division by zero if r is extremely close to 0
-                 potential_energy -= G * sys->mass[i] * sys->mass[j] / r;
-            }
-            // If r is effectively zero due to softening, potential is large but finite.
-            // A different handling might be needed for specific physical scenarios.
-        }
-    }
+//             if (r > sqrt(EPSILON_SQ)) { // Avoid potential division by zero if r is extremely close to 0
+//                  potential_energy -= G * sys->mass[i] * sys->mass[j] / r;
+//             }
+//             // If r is effectively zero due to softening, potential is large but finite.
+//             // A different handling might be needed for specific physical scenarios.
+//         }
+//     }
 
-    return kinetic_energy + potential_energy;
-}
+//     return kinetic_energy + potential_energy;
+// }
 
 // Calculate gravitational forces between all pairs of bodies
 void calculate_forces(const System *sys, double *forceX, double *forceY, double *forceZ) {

@@ -43,27 +43,27 @@ void calculate_force(const Body *body_i, const Body *body_j, double force[3]) {
 }
 
 // Function to calculate the total energy of the system (parallelized)
-double calculate_total_energy(const System *system) {
-    double kinetic_energy = 0.0;
-    double potential_energy = 0.0;
-    int n = system->num_bodies;
+// double calculate_total_energy(const System *system) {
+//     double kinetic_energy = 0.0;
+//     double potential_energy = 0.0;
+//     int n = system->num_bodies;
 
-    #pragma omp parallel for reduction(+:kinetic_energy)
-    for (int i = 0; i < n; i++) {
-        kinetic_energy += 0.5 * system->bodies[i].mass * (system->bodies[i].velocity[0] * system->bodies[i].velocity[0] +
-                                                          system->bodies[i].velocity[1] * system->bodies[i].velocity[1] +
-                                                          system->bodies[i].velocity[2] * system->bodies[i].velocity[2]);
-    }
+//     #pragma omp parallel for reduction(+:kinetic_energy)
+//     for (int i = 0; i < n; i++) {
+//         kinetic_energy += 0.5 * system->bodies[i].mass * (system->bodies[i].velocity[0] * system->bodies[i].velocity[0] +
+//                                                           system->bodies[i].velocity[1] * system->bodies[i].velocity[1] +
+//                                                           system->bodies[i].velocity[2] * system->bodies[i].velocity[2]);
+//     }
 
-    #pragma omp parallel for reduction(+:potential_energy)
-    for (int i = 0; i < n; i++) {
-        for (int j = i + 1; j < n; j++) {
-            potential_energy -= (G * system->bodies[i].mass * system->bodies[j].mass) / sqrt(distance_squared(&system->bodies[i], &system->bodies[j]));
-        }
-    }
+//     #pragma omp parallel for reduction(+:potential_energy)
+//     for (int i = 0; i < n; i++) {
+//         for (int j = i + 1; j < n; j++) {
+//             potential_energy -= (G * system->bodies[i].mass * system->bodies[j].mass) / sqrt(distance_squared(&system->bodies[i], &system->bodies[j]));
+//         }
+//     }
 
-    return kinetic_energy + potential_energy;
-}
+//     return kinetic_energy + potential_energy;
+// }
 
 // Function to initialize a system with a central body and orbiting smaller bodies (no need for parallelization here)
 System* initialize_circular_orbits(int num_orbiting_bodies, double central_mass, double orbit_radius, double orbiting_mass) {
@@ -183,8 +183,8 @@ int main() {
     printf("Initial number of bodies: %d\n", system->num_bodies);
 
     // Calculate initial energy
-    double initial_energy = calculate_total_energy(system);
-    printf("Initial total energy: %e J\n", initial_energy);
+    // double initial_energy = calculate_total_energy(system);
+    // printf("Initial total energy: %e J\n", initial_energy);
 
     // Run the simulation
     printf("Running simulation for %d steps...\n", num_steps);
@@ -200,14 +200,14 @@ int main() {
     printf("Simulation finished in %.2f seconds.\n", elapsed_time);
 
     // Calculate final energy
-    double final_energy = calculate_total_energy(system);
-    printf("Final total energy: %e J\n", final_energy);
+    // double final_energy = calculate_total_energy(system);
+    // printf("Final total energy: %e J\n", final_energy);
 
-    // Calculate the energy difference
-    double energy_difference = fabs(final_energy - initial_energy);
-    double relative_energy_difference = energy_difference / fabs(initial_energy);
-    printf("Absolute energy difference: %e J\n", energy_difference);
-    printf("Relative energy difference: %e\n", relative_energy_difference);
+    // // Calculate the energy difference
+    // double energy_difference = fabs(final_energy - initial_energy);
+    // double relative_energy_difference = energy_difference / fabs(initial_energy);
+    // printf("Absolute energy difference: %e J\n", energy_difference);
+    // printf("Relative energy difference: %e\n", relative_energy_difference);
 
     // Free the memory
     free_system(system);

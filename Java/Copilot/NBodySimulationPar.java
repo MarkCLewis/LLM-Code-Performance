@@ -40,19 +40,19 @@ public class NBodySimulationPar {
         });
     }
 
-    private static double calculateEnergy(List<Body> bodies) {
-        return bodies.parallelStream().mapToDouble(body -> {
-            double kinetic = 0.5 * body.mass * (body.vx * body.vx + body.vy * body.vy + body.vz * body.vz);
-            double potential = bodies.stream().filter(other -> body != other).mapToDouble(other -> {
-                double dx = body.x - other.x;
-                double dy = body.y - other.y;
-                double dz = body.z - other.z;
-                double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                return -G * body.mass * other.mass / distance;
-            }).sum();
-            return kinetic + 0.5 * potential;
-        }).sum();
-    }
+    // private static double calculateEnergy(List<Body> bodies) {
+    //     return bodies.parallelStream().mapToDouble(body -> {
+    //         double kinetic = 0.5 * body.mass * (body.vx * body.vx + body.vy * body.vy + body.vz * body.vz);
+    //         double potential = bodies.stream().filter(other -> body != other).mapToDouble(other -> {
+    //             double dx = body.x - other.x;
+    //             double dy = body.y - other.y;
+    //             double dz = body.z - other.z;
+    //             double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    //             return -G * body.mass * other.mass / distance;
+    //         }).sum();
+    //         return kinetic + 0.5 * potential;
+    //     }).sum();
+    // }
 
     private static void kickStep(List<Body> bodies) {
         bodies.parallelStream().forEach(body -> {
@@ -85,14 +85,14 @@ public class NBodySimulationPar {
         List<Body> bodies = new ArrayList<>(NUM_BODIES);
         initializeBodies(bodies);
 
-        double initialEnergy = calculateEnergy(bodies);
-        System.out.printf("Initial energy: %e%n", initialEnergy);
+        // double initialEnergy = calculateEnergy(bodies);
+        // System.out.printf("Initial energy: %e%n", initialEnergy);
 
         for (int step = 0; step < 100; step++) {
             kickStep(bodies);
         }
 
-        double finalEnergy = calculateEnergy(bodies);
-        System.out.printf("Final energy: %e%n", finalEnergy);
+        // double finalEnergy = calculateEnergy(bodies);
+        // System.out.printf("Final energy: %e%n", finalEnergy);
     }
 }
