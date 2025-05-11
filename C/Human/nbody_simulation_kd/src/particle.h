@@ -10,12 +10,18 @@
     (arr).ptr = NULL;                                                          \
   }
 
+// Define cache line size for alignment
+#define CACHE_LINE_SIZE 64
+
+// Particle structure aligned to cache line size
 typedef struct {
+  // Position and velocity vectors kept together for vectorization
   double p[3];
   double v[3];
   double r;
   double m;
-} Particle;
+  double pad[1]; // Padding to ensure 64-byte alignment
+} __attribute__((aligned(CACHE_LINE_SIZE))) Particle;
 
 typedef struct {
   size_t size;
@@ -34,5 +40,8 @@ size_t_array_t new_range(size_t start, size_t end);
 
 Particle_array_t two_bodies();
 Particle_array_t circular_orbits(size_t n);
+
+// Optimized memory allocation for particles
+Particle_array_t new_array_aligned_t(size_t elem_count);
 
 #endif
