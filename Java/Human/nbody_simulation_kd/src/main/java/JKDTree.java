@@ -7,6 +7,7 @@ public class JKDTree {
   static final int MAX_PARTS = 7;
   static final double THETA = 0.3;
   static final RandomGenerator rand = RandomGenerator.getDefault();
+  static final double G = 1.0; // Gravitational constant (using simulation units)
 
   // For leaves
   private int num_parts;
@@ -200,11 +201,50 @@ public class JKDTree {
     }
   }
 
+  /**
+   * Calculate the total energy of the system (kinetic + potential)
+   * @param system The system to calculate energy for
+   * @return The total energy of the system
+   */
+  static double calculateTotalEnergy(JSystem system) {
+    double kineticEnergy = 0.0;
+    double potentialEnergy = 0.0;
+    
+    // Calculate kinetic energy: sum of 0.5 * m * v^2 for each particle
+    for (int i = 0; i < system.numBodies(); i++) {
+      double vx = system.v(i, 0);
+      double vy = system.v(i, 1);
+      double vz = system.v(i, 2);
+      double v2 = vx * vx + vy * vy + vz * vz;
+      kineticEnergy += 0.5 * system.m(i) * v2;
+    }
+    
+    // Calculate potential energy: sum of -G * m1 * m2 / r for each pair
+    for (int i = 0; i < system.numBodies(); i++) {
+      for (int j = i + 1; j < system.numBodies(); j++) {
+        double dx = system.p(i, 0) - system.p(j, 0);
+        double dy = system.p(i, 1) - system.p(j, 1);
+        double dz = system.p(i, 2) - system.p(j, 2);
+        double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        // Avoid division by zero
+        if (distance > 1e-10) {
+          potentialEnergy -= G * system.m(i) * system.m(j) / distance;
+        }
+      }
+    }
+    
+    return kineticEnergy + potentialEnergy;
+  }
+
   static void simple_sim(JSystem system, double dt, int steps) {
     double[][] acc = new double[system.numBodies()][3];
 
     var tree = allocate_node_vec(system.numBodies());
     int[] indices = new int[system.numBodies()];
+
+    // Calculate initial energy
+    double initialEnergy = calculateTotalEnergy(system);
+    System.out.println("Initial total energy: " + initialEnergy);
 
     for (int step = 0; step < steps; ++step) {
       IntStream.range(0, system.numBodies()).parallel().forEach(i -> {
@@ -232,7 +272,24 @@ public class JKDTree {
         acc[i][1] = 0.0;
         acc[i][2] = 0.0;
       });
+      
+      // Optionally print energy every N steps to monitor conservation
+      if (step > 0 && step % 1000 == 0) {
+        double currentEnergy = calculateTotalEnergy(system);
+        double relativeError = Math.abs((currentEnergy - initialEnergy) / initialEnergy);
+        System.out.println("Step " + step + " - Energy: " + currentEnergy + 
+                           " (relative error: " + relativeError + ")");
+      }
     }
+
+    // Calculate final energy and report conservation
+    double finalEnergy = calculateTotalEnergy(system);
+    double absoluteError = finalEnergy - initialEnergy;
+    double relativeError = Math.abs(absoluteError / initialEnergy);
+    
+    System.out.println("Final total energy: " + finalEnergy);
+    System.out.println("Absolute energy error: " + absoluteError);
+    System.out.println("Relative energy error: " + relativeError);
   }
 
 }
