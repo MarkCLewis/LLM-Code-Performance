@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"time"
 )
 
 func main() {
@@ -25,9 +26,22 @@ func main() {
 		return
 	}
 
+	fmt.Printf("Running %d steps with %d particles using %d threads\n", steps, n, p)
+	
 	dt := 1e-3 // * 2.0 * std::f64::consts::PI;
 
-	Simple_sim(circular_orbits(n), dt, steps, p)
+	// Generate particles
+	particles := circular_orbits(n)
+	
+	// Measure execution time
+	start := time.Now()
+	
+	// Run simulation
+	Simple_sim(particles, dt, steps, p)
+	
+	elapsed := time.Since(start)
+	fmt.Printf("Simulation completed in %v\n", elapsed)
+	fmt.Printf("Performance: %.2f particle-steps/second\n", float64(n*steps)/elapsed.Seconds())
 }
 
 func circular_orbits(n int) []Particle {
