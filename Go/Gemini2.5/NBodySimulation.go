@@ -70,28 +70,28 @@ func (v Vector3D) Normalize() Vector3D {
 // --- Simulation Logic ---
 
 // calculateTotalEnergy calculates the total kinetic and potential energy of the system
-func calculateTotalEnergy(bodies []Body) float64 {
-	kineticEnergy := 0.0
-	potentialEnergy := 0.0
+// func calculateTotalEnergy(bodies []Body) float64 {
+// 	kineticEnergy := 0.0
+// 	potentialEnergy := 0.0
 
-	// Kinetic Energy: Sum(0.5 * m * v^2)
-	for i := range bodies {
-		kineticEnergy += 0.5 * bodies[i].Mass * bodies[i].Velocity.MagnitudeSquared()
-	}
+// 	// Kinetic Energy: Sum(0.5 * m * v^2)
+// 	for i := range bodies {
+// 		kineticEnergy += 0.5 * bodies[i].Mass * bodies[i].Velocity.MagnitudeSquared()
+// 	}
 
-	// Potential Energy: Sum(-G * m_i * m_j / |r_i - r_j|) for i < j
-	for i := 0; i < len(bodies); i++ {
-		for j := i + 1; j < len(bodies); j++ {
-			deltaPos := bodies[i].Position.Subtract(bodies[j].Position)
-			distance := deltaPos.Magnitude()
-			if distance > 0 { // Avoid self-interaction potential if distance is zero
-				potentialEnergy -= G * bodies[i].Mass * bodies[j].Mass / distance
-			}
-		}
-	}
+// 	// Potential Energy: Sum(-G * m_i * m_j / |r_i - r_j|) for i < j
+// 	for i := 0; i < len(bodies); i++ {
+// 		for j := i + 1; j < len(bodies); j++ {
+// 			deltaPos := bodies[i].Position.Subtract(bodies[j].Position)
+// 			distance := deltaPos.Magnitude()
+// 			if distance > 0 { // Avoid self-interaction potential if distance is zero
+// 				potentialEnergy -= G * bodies[i].Mass * bodies[j].Mass / distance
+// 			}
+// 		}
+// 	}
 
-	return kineticEnergy + potentialEnergy
-}
+// 	return kineticEnergy + potentialEnergy
+// }
 
 // simulateStep performs one step of the N-body simulation using the kick-step method
 func simulateStep(bodies []Body, timeStep, gravitationalConstant, softeningFactor float64) {
@@ -211,8 +211,8 @@ func main() {
 	fmt.Printf("System initialized in %v\n", initializationTime)
 
 	// --- Initial Energy Calculation ---
-	initialEnergy := calculateTotalEnergy(bodies)
-	fmt.Printf("Initial Total Energy: %.5e\n", initialEnergy)
+	// initialEnergy := calculateTotalEnergy(bodies)
+	// fmt.Printf("Initial Total Energy: %.5e\n", initialEnergy)
 
 	// --- Simulation Loop ---
 	fmt.Println("Running simulation...")
@@ -229,14 +229,15 @@ func main() {
 	fmt.Printf("Simulation completed in %v\n", simulationTime)
 
 	// --- Final Energy Calculation ---
-	finalEnergy := calculateTotalEnergy(bodies)
-	fmt.Printf("Final Total Energy:   %.5e\n", finalEnergy)
+	// finalEnergy := calculateTotalEnergy(bodies)
+	// fmt.Printf("Final Total Energy:   %.5e\n", finalEnergy)
 
-	// --- Energy Verification ---
-	energyChange := finalEnergy - initialEnergy
-	relativeEnergyChange := math.Abs(energyChange / initialEnergy)
-	fmt.Printf("Absolute Energy Change: %.5e\n", energyChange)
-	fmt.Printf("Relative Energy Change: %.5e (%.4f%%)\n", relativeEnergyChange, relativeEnergyChange*100.0)
+	// // --- Energy Verification ---
+	// energyChange := finalEnergy - initialEnergy
+	// relativeEnergyChange := math.Abs(energyChange / initialEnergy)
+	// fmt.Printf("Absolute Energy Change: %.5e\n", energyChange)
+	// fmt.Printf("Relative Energy Change: %.5e (%.4f%%)\n", relativeEnergyChange, relativeEnergyChange*100.0)
+	fmt.Printf("Body[0] %e %e %e", bodies[0].Position.X, bodies[0].Position.Y, bodies[0].Position.Z)
 
 	totalTime := time.Since(startTime)
 	fmt.Printf("Total execution time: %v\n", totalTime)

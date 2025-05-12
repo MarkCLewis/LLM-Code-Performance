@@ -92,6 +92,7 @@ int main() {
 
     // double final_energy = calculate_energy(bodies, n);
     // printf("Final energy: %e\n", final_energy);
+    printf("Final: %e %e %e", bodies[0].x, bodies[0].y, bodies[0].z);
 
     free(bodies);
     return 0;

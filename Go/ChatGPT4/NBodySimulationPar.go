@@ -133,80 +133,80 @@ func kickStep(n int) {
 	wg.Wait()
 }
 
-func calculateEnergy(n int) float64 {
-	kinetic := 0.0
-	numWorkers := runtime.NumCPU()
-	wg := sync.WaitGroup{}
-	kinChan := make(chan float64, numWorkers)
+// func calculateEnergy(n int) float64 {
+// 	kinetic := 0.0
+// 	numWorkers := runtime.NumCPU()
+// 	wg := sync.WaitGroup{}
+// 	kinChan := make(chan float64, numWorkers)
 
-	// Parallel kinetic energy
-	wg.Add(numWorkers)
-	chunk := (n + 1 + numWorkers - 1) / numWorkers
-	for w := 0; w < numWorkers; w++ {
-		start := w * chunk
-		end := (w + 1) * chunk
-		if end > n+1 {
-			end = n + 1
-		}
-		go func(start, end int) {
-			defer wg.Done()
-			sum := 0.0
-			for i := start; i < end; i++ {
-				v2 := bodies[i].VX*bodies[i].VX + bodies[i].VY*bodies[i].VY + bodies[i].VZ*bodies[i].VZ
-				sum += 0.5 * bodies[i].Mass * v2
-			}
-			kinChan <- sum
-		}(start, end)
-	}
-	wg.Wait()
-	close(kinChan)
-	for k := range kinChan {
-		kinetic += k
-	}
+// 	// Parallel kinetic energy
+// 	wg.Add(numWorkers)
+// 	chunk := (n + 1 + numWorkers - 1) / numWorkers
+// 	for w := 0; w < numWorkers; w++ {
+// 		start := w * chunk
+// 		end := (w + 1) * chunk
+// 		if end > n+1 {
+// 			end = n + 1
+// 		}
+// 		go func(start, end int) {
+// 			defer wg.Done()
+// 			sum := 0.0
+// 			for i := start; i < end; i++ {
+// 				v2 := bodies[i].VX*bodies[i].VX + bodies[i].VY*bodies[i].VY + bodies[i].VZ*bodies[i].VZ
+// 				sum += 0.5 * bodies[i].Mass * v2
+// 			}
+// 			kinChan <- sum
+// 		}(start, end)
+// 	}
+// 	wg.Wait()
+// 	close(kinChan)
+// 	for k := range kinChan {
+// 		kinetic += k
+// 	}
 
-	// Potential energy (still O(N^2), parallelize outer loop)
-	potential := 0.0
-	wg = sync.WaitGroup{}
-	potChan := make(chan float64, numWorkers)
-	wg.Add(numWorkers)
-	for w := 0; w < numWorkers; w++ {
-		start := w * chunk
-		end := (w + 1) * chunk
-		if end > n+1 {
-			end = n + 1
-		}
-		go func(start, end int) {
-			defer wg.Done()
-			sum := 0.0
-			for i := start; i < end; i++ {
-				for j := i + 1; j <= n; j++ {
-					dx := bodies[i].X - bodies[j].X
-					dy := bodies[i].Y - bodies[j].Y
-					dz := bodies[i].Z - bodies[j].Z
-					dist := math.Sqrt(dx*dx + dy*dy + dz*dz + 1e-10)
-					sum -= G * bodies[i].Mass * bodies[j].Mass / dist
-				}
-			}
-			potChan <- sum
-		}(start, end)
-	}
-	wg.Wait()
-	close(potChan)
-	for p := range potChan {
-		potential += p
-	}
+// 	// Potential energy (still O(N^2), parallelize outer loop)
+// 	potential := 0.0
+// 	wg = sync.WaitGroup{}
+// 	potChan := make(chan float64, numWorkers)
+// 	wg.Add(numWorkers)
+// 	for w := 0; w < numWorkers; w++ {
+// 		start := w * chunk
+// 		end := (w + 1) * chunk
+// 		if end > n+1 {
+// 			end = n + 1
+// 		}
+// 		go func(start, end int) {
+// 			defer wg.Done()
+// 			sum := 0.0
+// 			for i := start; i < end; i++ {
+// 				for j := i + 1; j <= n; j++ {
+// 					dx := bodies[i].X - bodies[j].X
+// 					dy := bodies[i].Y - bodies[j].Y
+// 					dz := bodies[i].Z - bodies[j].Z
+// 					dist := math.Sqrt(dx*dx + dy*dy + dz*dz + 1e-10)
+// 					sum -= G * bodies[i].Mass * bodies[j].Mass / dist
+// 				}
+// 			}
+// 			potChan <- sum
+// 		}(start, end)
+// 	}
+// 	wg.Wait()
+// 	close(potChan)
+// 	for p := range potChan {
+// 		potential += p
+// 	}
 
-	return kinetic + potential
-}
+// 	return kinetic + potential
+// }
 
 func main() {
 	start := time.Now()
 	fmt.Println("Initializing system...")
 	initializeSystem(N)
 
-	fmt.Println("Calculating initial energy...")
-	initialEnergy := calculateEnergy(N)
-	fmt.Printf("Initial total energy: %.6e\n", initialEnergy)
+	// fmt.Println("Calculating initial energy...")
+	// initialEnergy := calculateEnergy(N)
+	// fmt.Printf("Initial total energy: %.6e\n", initialEnergy)
 
 	for step := 0; step < STEPS; step++ {
 		kickStep(N)
@@ -215,9 +215,11 @@ func main() {
 		}
 	}
 
-	fmt.Println("Calculating final energy...")
-	finalEnergy := calculateEnergy(N)
-	fmt.Printf("Final total energy: %.6e\n", finalEnergy)
-	fmt.Printf("Energy difference:  %.6e\n", math.Abs(finalEnergy-initialEnergy))
+	// fmt.Println("Calculating final energy...")
+	// finalEnergy := calculateEnergy(N)
+	// fmt.Printf("Final total energy: %.6e\n", finalEnergy)
+	// fmt.Printf("Energy difference:  %.6e\n", math.Abs(finalEnergy-initialEnergy))
+	fmt.Printf("Body[0] %e %e %e", bodies[0].X, bodies[0].Y, bodies[0].Z)
+
 	fmt.Printf("Simulation completed in %.2f seconds.\n", time.Since(start).Seconds())
 }

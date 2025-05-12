@@ -119,29 +119,29 @@ fn update_bodies(bodies: &mut Vec<Body>) {
     });
 }
 
-fn compute_energy(bodies: &Vec<Body>) -> f64 {
-    let kinetic: f64 = bodies.par_iter().map(|b| 0.5 * b.mass * b.vel.norm_squared()).sum();
-    let potential: f64 = (0..bodies.len()).into_par_iter().map(|i| {
-        let mut pot = 0.0;
-        let bi = &bodies[i];
-        for j in (i + 1)..bodies.len() {
-            let bj = &bodies[j];
-            let dx = bi.pos.sub(&bj.pos);
-            let dist = (dx.norm_squared() + EPS2).sqrt();
-            pot -= G * bi.mass * bj.mass / dist;
-        }
-        pot
-    }).sum();
-    kinetic + potential
-}
+// fn compute_energy(bodies: &Vec<Body>) -> f64 {
+//     let kinetic: f64 = bodies.par_iter().map(|b| 0.5 * b.mass * b.vel.norm_squared()).sum();
+//     let potential: f64 = (0..bodies.len()).into_par_iter().map(|i| {
+//         let mut pot = 0.0;
+//         let bi = &bodies[i];
+//         for j in (i + 1)..bodies.len() {
+//             let bj = &bodies[j];
+//             let dx = bi.pos.sub(&bj.pos);
+//             let dist = (dx.norm_squared() + EPS2).sqrt();
+//             pot -= G * bi.mass * bj.mass / dist;
+//         }
+//         pot
+//     }).sum();
+//     kinetic + potential
+// }
 
 fn main() {
     println!("Initializing system...");
     let mut bodies = initialize_system(N_BODIES);
 
-    println!("Calculating initial energy...");
-    let initial_energy = compute_energy(&bodies);
-    println!("Initial energy: {:.6e}", initial_energy);
+    // println!("Calculating initial energy...");
+    // let initial_energy = compute_energy(&bodies);
+    // println!("Initial energy: {:.6e}", initial_energy);
 
     for step in 0..STEPS {
         compute_forces(&mut bodies);
@@ -151,8 +151,11 @@ fn main() {
         }
     }
 
-    println!("Calculating final energy...");
-    let final_energy = compute_energy(&bodies);
-    println!("Final energy: {:.6e}", final_energy);
-    println!("Energy difference: {:.6e}", (final_energy - initial_energy).abs());
+    // println!("Calculating final energy...");
+    // let final_energy = compute_energy(&bodies);
+    // println!("Final energy: {:.6e}", final_energy);
+    // println!("Energy difference: {:.6e}", (final_energy - initial_energy).abs());
+    println!("{}", bodies[0].pos.x);
+    println!("{}", bodies[0].pos.y);
+    println!("{}", bodies[0].pos.z)
 }

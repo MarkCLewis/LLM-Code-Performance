@@ -91,36 +91,36 @@ end
 Calculates the total energy (Kinetic + Potential) of the system.
 Potential energy calculation is O(N^2).
 """
-function calculate_total_energy(positions::Matrix{Float64},
-                                velocities::Matrix{Float64},
-                                masses::Vector{Float64})::Float64
-    N = size(positions, 1)
-    kinetic_energy = 0.0
-    potential_energy = 0.0
+# function calculate_total_energy(positions::Matrix{Float64},
+#                                 velocities::Matrix{Float64},
+#                                 masses::Vector{Float64})::Float64
+#     N = size(positions, 1)
+#     kinetic_energy = 0.0
+#     potential_energy = 0.0
 
-    # Kinetic Energy: KE = sum(0.5 * m_i * |v_i|^2)
-    for i in 1:N
-        vel_sq = velocities[i, 1]^2 + velocities[i, 2]^2 + velocities[i, 3]^2
-        kinetic_energy += 0.5 * masses[i] * vel_sq
-    end
+#     # Kinetic Energy: KE = sum(0.5 * m_i * |v_i|^2)
+#     for i in 1:N
+#         vel_sq = velocities[i, 1]^2 + velocities[i, 2]^2 + velocities[i, 3]^2
+#         kinetic_energy += 0.5 * masses[i] * vel_sq
+#     end
 
-    # Potential Energy: PE = sum_{i < j} (-G * m_i * m_j / |r_i - r_j|)
-    # Includes softening in distance calculation for consistency
-    for i in 1:N
-        for j in (i+1):N
-            dx = positions[j, 1] - positions[i, 1]
-            dy = positions[j, 2] - positions[i, 2]
-            dz = positions[j, 3] - positions[i, 3]
+#     # Potential Energy: PE = sum_{i < j} (-G * m_i * m_j / |r_i - r_j|)
+#     # Includes softening in distance calculation for consistency
+#     for i in 1:N
+#         for j in (i+1):N
+#             dx = positions[j, 1] - positions[i, 1]
+#             dy = positions[j, 2] - positions[i, 2]
+#             dz = positions[j, 3] - positions[i, 3]
 
-            dist_sq = dx^2 + dy^2 + dz^2 + SOFTENING_SQ
-            dist = sqrt(dist_sq)
+#             dist_sq = dx^2 + dy^2 + dz^2 + SOFTENING_SQ
+#             dist = sqrt(dist_sq)
 
-            potential_energy -= G * masses[i] * masses[j] / dist
-        end
-    end
+#             potential_energy -= G * masses[i] * masses[j] / dist
+#         end
+#     end
 
-    return kinetic_energy + potential_energy
-end
+#     return kinetic_energy + potential_energy
+# end
 
 
 # --- Initialization ---
@@ -209,9 +209,9 @@ function run_simulation(num_bodies_orbiting::Int, num_steps::Int, dt::Float64)
     println("Initialization complete.")
 
     # Energy check before simulation
-    println("Calculating initial energy...")
-    initial_energy = calculate_total_energy(positions, velocities, masses)
-    @printf("Initial Total Energy: %.6e\n", initial_energy)
+    # println("Calculating initial energy...")
+    # initial_energy = calculate_total_energy(positions, velocities, masses)
+    # @printf("Initial Total Energy: %.6e\n", initial_energy)
     println("---------------------------------")
 
     # --- Simulation Loop ---
@@ -235,19 +235,20 @@ function run_simulation(num_bodies_orbiting::Int, num_steps::Int, dt::Float64)
     println("---------------------------------")
 
     # Energy check after simulation
-    println("Calculating final energy...")
-    final_energy = calculate_total_energy(positions, velocities, masses)
-    @printf("Final Total Energy:   %.6e\n", final_energy)
+    # println("Calculating final energy...")
+    # final_energy = calculate_total_energy(positions, velocities, masses)
+    # @printf("Final Total Energy:   %.6e\n", final_energy)
 
-    # Accuracy check
-    energy_diff = abs(final_energy - initial_energy)
-    relative_error = if abs(initial_energy) > 1e-12 # Avoid division by zero if initial E is tiny
-        energy_diff / abs(initial_energy)
-    else
-        energy_diff # Absolute difference if initial energy is near zero
-    end
-    @printf("Absolute Energy Difference: %.6e\n", energy_diff)
-    @printf("Relative Energy Error: %.6e (%.4f%%)\n", relative_error, relative_error * 100)
+    # # Accuracy check
+    # energy_diff = abs(final_energy - initial_energy)
+    # relative_error = if abs(initial_energy) > 1e-12 # Avoid division by zero if initial E is tiny
+    #     energy_diff / abs(initial_energy)
+    # else
+    #     energy_diff # Absolute difference if initial energy is near zero
+    # end
+    # @printf("Absolute Energy Difference: %.6e\n", energy_diff)
+    # @printf("Relative Energy Error: %.6e (%.4f%%)\n", relative_error, relative_error * 100)
+    println("bodie[1] %e %e %e", positions[1, 1], positions[1, 2], positions[1, 3])
     println("---------------------------------")
     @printf("Total Simulation Time: %.3f seconds\n", total_time)
     println("--- N-Body Simulation End ---")

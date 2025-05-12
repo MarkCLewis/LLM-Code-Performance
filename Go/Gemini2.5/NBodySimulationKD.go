@@ -484,31 +484,31 @@ func (v Vector3D) Cross(other Vector3D) Vector3D {
 }
 
 // --- Energy Calculation --- (Same as before, but less accurate due to approximation)
-func calculateTotalEnergy(bodies []Body) float64 {
-	// ... (implementation remains the same) ...
-	kineticEnergy := 0.0
-	potentialEnergy := 0.0
+// func calculateTotalEnergy(bodies []Body) float64 {
+// 	// ... (implementation remains the same) ...
+// 	kineticEnergy := 0.0
+// 	potentialEnergy := 0.0
 
-	// Kinetic Energy: Sum(0.5 * m * v^2)
-	for i := range bodies {
-		kineticEnergy += 0.5 * bodies[i].Mass * bodies[i].Velocity.MagnitudeSquared()
-	}
+// 	// Kinetic Energy: Sum(0.5 * m * v^2)
+// 	for i := range bodies {
+// 		kineticEnergy += 0.5 * bodies[i].Mass * bodies[i].Velocity.MagnitudeSquared()
+// 	}
 
-	// Potential Energy: Sum(-G * m_i * m_j / |r_i - r_j|) for i < j
-	// NOTE: This calculates the *exact* potential energy. The simulation uses an approximation.
-	// So, the total energy calculated here might not appear well-conserved by the simulation step.
-	for i := 0; i < len(bodies); i++ {
-		for j := i + 1; j < len(bodies); j++ {
-			deltaPos := bodies[i].Position.Subtract(bodies[j].Position)
-			distance := deltaPos.Magnitude()
-			if distance > 0 {
-				potentialEnergy -= G * bodies[i].Mass * bodies[j].Mass / distance
-			}
-		}
-	}
-	return kineticEnergy + potentialEnergy
+// 	// Potential Energy: Sum(-G * m_i * m_j / |r_i - r_j|) for i < j
+// 	// NOTE: This calculates the *exact* potential energy. The simulation uses an approximation.
+// 	// So, the total energy calculated here might not appear well-conserved by the simulation step.
+// 	for i := 0; i < len(bodies); i++ {
+// 		for j := i + 1; j < len(bodies); j++ {
+// 			deltaPos := bodies[i].Position.Subtract(bodies[j].Position)
+// 			distance := deltaPos.Magnitude()
+// 			if distance > 0 {
+// 				potentialEnergy -= G * bodies[i].Mass * bodies[j].Mass / distance
+// 			}
+// 		}
+// 	}
+// 	return kineticEnergy + potentialEnergy
 
-}
+// }
 
 // --- Main Function ---
 func main() {
@@ -536,9 +536,9 @@ func main() {
 	fmt.Printf("System initialized in %v\n", initializationTime)
 
 	// --- Initial Energy Calculation ---
-	initialEnergy := calculateTotalEnergy(bodies)
-	fmt.Printf("Initial Total Energy (Exact): %.5e\n", initialEnergy)
-	fmt.Println("Note: Simulation uses approximated forces (theta > 0), so exact energy conservation is not expected.")
+	// initialEnergy := calculateTotalEnergy(bodies)
+	// fmt.Printf("Initial Total Energy (Exact): %.5e\n", initialEnergy)
+	// fmt.Println("Note: Simulation uses approximated forces (theta > 0), so exact energy conservation is not expected.")
 
 	// --- Simulation Loop ---
 	fmt.Println("Running simulation...")
@@ -559,20 +559,21 @@ func main() {
 	fmt.Printf("Simulation completed in %v\n", simulationTime)
 
 	// --- Final Energy Calculation ---
-	finalEnergy := calculateTotalEnergy(bodies)
-	fmt.Printf("Final Total Energy (Exact):   %.5e\n", finalEnergy)
+	// finalEnergy := calculateTotalEnergy(bodies)
+	// fmt.Printf("Final Total Energy (Exact):   %.5e\n", finalEnergy)
 
-	// --- Energy Verification ---
-	energyChange := finalEnergy - initialEnergy
-	// Avoid division by zero if initial energy is near zero
-	relativeEnergyChange := 0.0
-	if math.Abs(initialEnergy) > 1e-12 {
-		relativeEnergyChange = math.Abs(energyChange / initialEnergy)
-	}
+	// // --- Energy Verification ---
+	// energyChange := finalEnergy - initialEnergy
+	// // Avoid division by zero if initial energy is near zero
+	// relativeEnergyChange := 0.0
+	// if math.Abs(initialEnergy) > 1e-12 {
+	// 	relativeEnergyChange = math.Abs(energyChange / initialEnergy)
+	// }
 
-	fmt.Printf("Absolute Energy Change (Exact): %.5e\n", energyChange)
-	fmt.Printf("Relative Energy Change (Exact): %.5e (%.4f%%)\n", relativeEnergyChange, relativeEnergyChange*100.0)
-	fmt.Println("Energy drift is expected due to force approximation (theta > 0).")
+	// fmt.Printf("Absolute Energy Change (Exact): %.5e\n", energyChange)
+	// fmt.Printf("Relative Energy Change (Exact): %.5e (%.4f%%)\n", relativeEnergyChange, relativeEnergyChange*100.0)
+	// fmt.Println("Energy drift is expected due to force approximation (theta > 0).")
+	fmt.Printf("Body[0] %e %e %e", bodies[0].Position.X, bodies[0].Position.Y, bodies[0].Position.Z)
 
 	totalTime := time.Since(startTime)
 	fmt.Printf("Total execution time: %v\n", totalTime)

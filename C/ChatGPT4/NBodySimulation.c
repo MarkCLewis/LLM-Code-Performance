@@ -111,6 +111,7 @@ int main() {
     // double final_energy = calculate_energy(N_BODIES);
     // printf("Final total energy: %.6e\n", final_energy);
     // printf("Energy difference: %.6e\n", fabs(final_energy - initial_energy));
+    printf("Final: %e %e %e", bodies[0].x, bodies[0].y, bodies[0].z);
 
     free(bodies);
     clock_t end = clock();

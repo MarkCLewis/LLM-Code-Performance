@@ -145,33 +145,34 @@ user	3m28.673s
 sys	0m0.040s
 Copilot NBodySimulation.c
 
-real	0m0.001s
-user	0m0.001s
-sys	0m0.000s
+real	0m5.429s
+user	3m45.496s
+sys	0m0.436s
 
-real	0m0.001s
-user	0m0.001s
-sys	0m0.000s
+real	0m7.044s
+user	3m32.248s
+sys	0m0.224s
 
-real	0m0.001s
-user	0m0.001s
-sys	0m0.000s
+real	0m7.311s
+user	3m32.848s
+sys	0m0.217s
 
-real	0m0.001s
-user	0m0.001s
-sys	0m0.000s
+real	0m5.900s
+user	3m47.577s
+sys	0m0.128s
 
-real	0m0.001s
-user	0m0.000s
-sys	0m0.001s
+real	0m5.905s
+user	3m52.962s
+sys	0m0.177s
 
-real	0m0.001s
-user	0m0.001s
-sys	0m0.000s
+real	0m5.910s
+user	3m49.625s
+sys	0m0.145s
 
-real	0m0.001s
-user	0m0.001s
-sys	0m0.000s
+real	0m5.915s
+user	3m51.997s
+sys	0m0.268s
+
 Copilot NBodySimulationKD.c
 ./benchmark.sh: line 11: 794379 Segmentation fault      (core dumped) ./a.out
 
@@ -366,3 +367,77 @@ sys	0m41.647s
 real	5m22.979s
 user	219m57.728s
 sys	0m41.952s
+
+real	5m26.023s
+user	223m36.707s
+sys	0m40.769s
+
+real	5m20.063s
+user	218m58.828s
+sys	0m43.554s
+
+real	5m28.008s
+user	217m19.733s
+sys	0m44.783s
+
+real	5m18.491s
+user	216m17.565s
+sys	0m39.601s
+Gemini2.5 NBodySimulationOpt.c
+
+real	15m34.947s
+user	34m35.030s
+sys	0m26.926s
+
+real	15m32.200s
+user	34m41.612s
+sys	0m27.444s
+
+real	15m33.728s
+user	34m18.742s
+sys	0m26.340s
+
+real	15m45.356s
+user	33m38.915s
+sys	0m27.430s
+
+real	15m53.844s
+user	33m43.599s
+sys	0m27.404s
+
+real	16m38.217s
+user	35m35.956s
+sys	0m27.997s
+
+real	15m54.060s
+user	34m49.069s
+sys	0m28.766s
+Gemini2.5 NBodySimulationPar.c
+
+real	0m4.810s
+user	3m43.049s
+sys	0m0.480s
+
+real	0m4.851s
+user	3m42.320s
+sys	0m0.437s
+
+real	0m4.783s
+user	3m40.296s
+sys	0m0.622s
+
+real	0m4.543s
+user	3m31.932s
+sys	0m0.260s
+
+real	0m4.620s
+user	3m35.756s
+sys	0m0.571s
+
+real	0m4.692s
+user	3m37.099s
+sys	0m0.891s
+
+real	0m4.584s
+user	3m31.137s
+sys	0m0.547s

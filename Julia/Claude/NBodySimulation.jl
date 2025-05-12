@@ -151,38 +151,38 @@ end
 
 Calculate the total energy (kinetic + potential) of the system.
 """
-function calculate_energy(system)
-    G = 6.67430e-11  # Gravitational constant
-    ε = 1e-10        # Softening parameter
+# function calculate_energy(system)
+#     G = 6.67430e-11  # Gravitational constant
+#     ε = 1e-10        # Softening parameter
     
-    kinetic_energy = 0.0
-    potential_energy = 0.0
+#     kinetic_energy = 0.0
+#     potential_energy = 0.0
     
-    n = length(system.bodies)
+#     n = length(system.bodies)
     
-    # Calculate kinetic energy: KE = 0.5 * m * v^2
-    for i in 1:n
-        body = system.bodies[i]
-        v_squared = sum(body.velocity.^2)
-        kinetic_energy += 0.5 * body.mass * v_squared
-    end
+#     # Calculate kinetic energy: KE = 0.5 * m * v^2
+#     for i in 1:n
+#         body = system.bodies[i]
+#         v_squared = sum(body.velocity.^2)
+#         kinetic_energy += 0.5 * body.mass * v_squared
+#     end
     
-    # Calculate potential energy: PE = -G * m1 * m2 / r
-    # We sum over each pair once
-    for i in 1:(n-1)
-        for j in (i+1):n
-            body_i = system.bodies[i]
-            body_j = system.bodies[j]
+#     # Calculate potential energy: PE = -G * m1 * m2 / r
+#     # We sum over each pair once
+#     for i in 1:(n-1)
+#         for j in (i+1):n
+#             body_i = system.bodies[i]
+#             body_j = system.bodies[j]
             
-            r_vec = body_j.position - body_i.position
-            r = sqrt(sum(r_vec.^2) + ε^2)  # Softened distance
+#             r_vec = body_j.position - body_i.position
+#             r = sqrt(sum(r_vec.^2) + ε^2)  # Softened distance
             
-            potential_energy -= G * body_i.mass * body_j.mass / r
-        end
-    end
+#             potential_energy -= G * body_i.mass * body_j.mass / r
+#         end
+#     end
     
-    return kinetic_energy + potential_energy
-end
+#     return kinetic_energy + potential_energy
+# end
 
 """
     run_simulation!(system, dt, num_steps)
@@ -190,8 +190,8 @@ end
 Run the N-body simulation for a specified number of steps.
 """
 function run_simulation!(system, dt, num_steps)
-    initial_energy = calculate_energy(system)
-    println("Initial total energy: ", initial_energy)
+    # initial_energy = calculate_energy(system)
+    # println("Initial total energy: ", initial_energy)
     
     # Start timing
     start_time = time()
@@ -212,10 +212,11 @@ function run_simulation!(system, dt, num_steps)
     end_time = time()
     elapsed = end_time - start_time
     
-    final_energy = calculate_energy(system)
-    println("Final total energy: ", final_energy)
-    println("Energy change: ", final_energy - initial_energy)
-    println("Relative energy change: ", (final_energy - initial_energy) / initial_energy)
+    # final_energy = calculate_energy(system)
+    # println("Final total energy: ", final_energy)
+    # println("Energy change: ", final_energy - initial_energy)
+    # println("Relative energy change: ", (final_energy - initial_energy) / initial_energy)
+    println("bodie[1] %e %e %e", system.bodies[1].position[1], system.bodies[1].position[2], system.bodies[1].position[3])
     println("Simulation completed in $(elapsed) seconds")
     
     return system

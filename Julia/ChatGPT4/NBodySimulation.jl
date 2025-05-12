@@ -78,36 +78,36 @@ function update_bodies!(bodies)
     end
 end
 
-function compute_energy(bodies)
-    kinetic = 0.0
-    potential = 0.0
-    n = length(bodies)
+# function compute_energy(bodies)
+#     kinetic = 0.0
+#     potential = 0.0
+#     n = length(bodies)
 
-    for i in 1:n
-        b = bodies[i]
-        v2 = b.vx^2 + b.vy^2 + b.vz^2
-        kinetic += 0.5 * b.mass * v2
+#     for i in 1:n
+#         b = bodies[i]
+#         v2 = b.vx^2 + b.vy^2 + b.vz^2
+#         kinetic += 0.5 * b.mass * v2
 
-        for j in i+1:n
-            b2 = bodies[j]
-            dx = b.x - b2.x
-            dy = b.y - b2.y
-            dz = b.z - b2.z
-            dist = sqrt(dx^2 + dy^2 + dz^2 + 1e-10)
-            potential -= G * b.mass * b2.mass / dist
-        end
-    end
+#         for j in i+1:n
+#             b2 = bodies[j]
+#             dx = b.x - b2.x
+#             dy = b.y - b2.y
+#             dz = b.z - b2.z
+#             dist = sqrt(dx^2 + dy^2 + dz^2 + 1e-10)
+#             potential -= G * b.mass * b2.mass / dist
+#         end
+#     end
 
-    return kinetic + potential
-end
+#     return kinetic + potential
+# end
 
 function main()
     println("Initializing bodies...")
     bodies = initialize_system(N_BODIES)
 
-    println("Computing initial energy...")
-    energy0 = compute_energy(bodies)
-    @printf("Initial energy: %.6e\n", energy0)
+    # println("Computing initial energy...")
+    # energy0 = compute_energy(bodies)
+    # @printf("Initial energy: %.6e\n", energy0)
 
     for step in 1:STEPS
         compute_forces!(bodies)
@@ -117,10 +117,11 @@ function main()
         end
     end
 
-    println("Computing final energy...")
-    energy1 = compute_energy(bodies)
-    @printf("Final energy: %.6e\n", energy1)
-    @printf("Energy difference: %.6e\n", abs(energy1 - energy0))
+    # println("Computing final energy...")
+    # energy1 = compute_energy(bodies)
+    # @printf("Final energy: %.6e\n", energy1)
+    # @printf("Energy difference: %.6e\n", abs(energy1 - energy0))
+    println("bodie[1] %e %e %e", bodies[1].x, bodies[1].y, bodies[1].z)
 end
 
 main()

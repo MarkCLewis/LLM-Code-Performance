@@ -1,0 +1,145 @@
+ChatGPT nbody_simulation
+
+real	1m32.864s
+user	1m32.853s
+sys	0m0.000s
+
+real	1m34.398s
+user	1m34.394s
+sys	0m0.000s
+
+real	1m35.025s
+user	1m34.982s
+sys	0m0.020s
+
+real	1m34.559s
+user	1m34.551s
+sys	0m0.003s
+
+real	1m33.712s
+user	1m33.708s
+sys	0m0.000s
+
+real	1m33.268s
+user	1m33.255s
+sys	0m0.007s
+
+real	1m33.207s
+user	1m33.197s
+sys	0m0.004s
+ChatGPT nbody_simulation_par
+
+real	0m4.397s
+user	3m17.523s
+sys	0m0.860s
+
+real	0m4.323s
+user	3m17.341s
+sys	0m0.583s
+
+real	0m4.342s
+user	3m15.875s
+sys	0m0.793s
+
+real	0m4.362s
+user	3m16.748s
+sys	0m0.725s
+
+real	0m4.347s
+user	3m16.653s
+sys	0m0.921s
+
+real	0m4.348s
+user	3m16.420s
+sys	0m1.042s
+
+real	0m4.342s
+user	3m16.801s
+sys	0m0.696s
+Gemini2.5 nbody_simulation
+
+real	5m16.791s
+user	5m16.753s
+sys	0m0.012s
+
+real	5m15.249s
+user	5m15.223s
+sys	0m0.008s
+
+real	5m18.229s
+user	5m18.203s
+sys	0m0.000s
+
+real	5m15.220s
+user	5m15.196s
+sys	0m0.003s
+
+real	5m17.679s
+user	5m17.643s
+sys	0m0.004s
+
+real	5m20.141s
+user	5m20.111s
+sys	0m0.008s
+
+real	5m18.505s
+user	5m18.483s
+sys	0m0.000s
+Gemini2.5 nbody_simulation_kd
+
+real	53m23.546s
+user	58m25.620s
+sys	0m1.248s
+
+real	48m30.787s
+user	53m29.533s
+sys	0m1.786s
+
+real	48m25.746s
+user	53m26.781s
+sys	0m1.236s
+
+real	48m22.341s
+user	53m22.309s
+sys	0m1.240s
+
+real	48m54.142s
+user	53m58.565s
+sys	0m1.200s
+
+real	48m29.334s
+user	53m27.023s
+sys	0m0.996s
+
+real	48m50.009s
+user	53m52.483s
+sys	0m1.235s
+Gemini2.5 nbody_simulation_par
+
+real	0m11.174s
+user	8m38.014s
+sys	0m0.767s
+
+real	0m11.170s
+user	8m38.174s
+sys	0m0.750s
+
+real	0m11.194s
+user	8m38.675s
+sys	0m0.995s
+
+real	0m11.115s
+user	8m36.055s
+sys	0m0.705s
+
+real	0m11.172s
+user	8m37.618s
+sys	0m0.756s
+
+real	0m11.137s
+user	8m36.145s
+sys	0m0.745s
+
+real	0m11.184s
+user	8m38.338s
+sys	0m0.820s

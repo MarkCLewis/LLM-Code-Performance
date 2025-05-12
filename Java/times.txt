@@ -1,0 +1,232 @@
+ChatGPT4 NBodyKDTreeKD.java
+
+real	0m8.695s
+user	1m49.356s
+sys	0m36.961s
+
+real	0m8.975s
+user	1m51.908s
+sys	0m38.745s
+
+real	0m8.832s
+user	1m50.031s
+sys	0m35.702s
+
+real	0m8.838s
+user	1m52.655s
+sys	0m38.585s
+
+real	0m8.445s
+user	1m49.958s
+sys	0m36.601s
+
+real	0m8.836s
+user	1m50.649s
+sys	0m38.449s
+
+real	0m8.585s
+user	1m50.437s
+sys	0m35.821s
+ChatGPT4 NBodySimulation.java
+
+real	1m5.771s
+user	1m8.104s
+sys	0m36.389s
+
+real	1m6.085s
+user	1m8.267s
+sys	0m38.543s
+
+real	1m5.807s
+user	1m8.325s
+sys	0m36.710s
+
+real	1m6.627s
+user	1m9.060s
+sys	0m39.031s
+
+real	1m5.282s
+user	1m7.308s
+sys	0m38.395s
+
+real	1m5.618s
+user	1m7.761s
+sys	0m36.957s
+
+real	1m7.380s
+user	1m9.499s
+sys	0m36.706s
+ChatGPT4 NBodySimulationKDop.java
+
+real	0m8.688s
+user	1m48.662s
+sys	0m37.955s
+
+real	0m8.828s
+user	1m48.712s
+sys	0m38.604s
+
+real	0m8.963s
+user	1m49.582s
+sys	0m39.848s
+
+real	0m8.826s
+user	1m49.822s
+sys	0m36.337s
+
+real	0m8.487s
+user	1m50.305s
+sys	0m36.389s
+
+real	0m8.929s
+user	1m49.937s
+sys	0m36.152s
+
+real	0m9.028s
+user	1m53.458s
+sys	0m38.935s
+ChatGPT4 NBodySimulationPar.java
+
+real	0m7.826s
+user	3m42.633s
+sys	0m39.212s
+
+real	0m7.735s
+user	3m40.840s
+sys	0m35.823s
+
+real	0m7.705s
+user	3m41.124s
+sys	0m36.998s
+
+real	0m7.705s
+user	3m38.870s
+sys	0m36.592s
+
+real	0m7.872s
+user	3m39.900s
+sys	0m37.759s
+
+real	0m7.686s
+user	3m37.981s
+sys	0m36.098s
+
+real	0m7.647s
+user	3m40.273s
+sys	0m35.359s
+Copilot NBodySimulation.java
+
+real	1m35.016s
+user	1m37.242s
+sys	0m26.744s
+
+real	1m35.010s
+user	1m36.921s
+sys	0m26.961s
+
+real	1m34.259s
+user	1m35.765s
+sys	0m26.257s
+
+real	1m34.590s
+user	1m36.225s
+sys	0m26.651s
+
+real	1m34.631s
+user	1m36.912s
+sys	0m27.672s
+
+real	1m34.407s
+user	1m36.170s
+sys	0m28.305s
+
+real	1m34.300s
+user	1m35.993s
+sys	0m27.341s
+Copilot NBodySimulationPar.java
+
+real	0m6.423s
+user	0m40.872s
+sys	0m27.218s
+
+real	0m6.466s
+user	0m40.542s
+sys	0m26.839s
+
+real	0m6.557s
+user	0m40.476s
+sys	0m25.296s
+
+real	0m5.891s
+user	0m36.579s
+sys	0m27.450s
+
+real	0m6.816s
+user	0m43.415s
+sys	0m26.604s
+
+real	0m6.348s
+user	0m39.529s
+sys	0m27.170s
+
+real	0m5.734s
+user	0m35.655s
+sys	0m25.462s
+Gemini2.5 NBodySimulation.java
+
+real	0m58.745s
+user	1m1.429s
+sys	0m28.555s
+
+real	0m58.167s
+user	1m1.088s
+sys	0m26.583s
+
+real	0m57.400s
+user	1m0.731s
+sys	0m28.859s
+
+real	0m58.037s
+user	1m1.598s
+sys	0m26.069s
+
+real	0m57.460s
+user	1m0.529s
+sys	0m28.363s
+
+real	0m57.671s
+user	1m0.605s
+sys	0m26.722s
+
+real	0m57.511s
+user	1m0.982s
+sys	0m25.690s
+Gemini2.5 NBodySimulationParallel.java
+
+real	0m7.195s
+user	3m37.980s
+sys	0m27.863s
+
+real	0m7.234s
+user	3m39.086s
+sys	0m27.045s
+
+real	0m7.135s
+user	3m37.812s
+sys	0m25.559s
+
+real	0m7.142s
+user	3m34.950s
+sys	0m26.192s
+
+real	0m7.197s
+user	3m37.072s
+sys	0m27.918s
+
+real	0m7.165s
+user	3m36.814s
+sys	0m27.730s
+
+real	0m7.174s
+user	3m37.994s
+sys	0m27.575s

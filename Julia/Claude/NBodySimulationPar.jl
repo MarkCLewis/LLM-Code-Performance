@@ -170,50 +170,50 @@ Calculate the total energy (kinetic + potential) of the system.
 Uses multithreading for kinetic energy calculation and atomic operations
 for thread-safe summation of potential energy.
 """
-function calculate_energy(system)
-    G = 6.67430e-11  # Gravitational constant
-    ε = 1e-10        # Softening parameter
+# function calculate_energy(system)
+#     G = 6.67430e-11  # Gravitational constant
+#     ε = 1e-10        # Softening parameter
     
-    n = length(system.bodies)
+#     n = length(system.bodies)
     
-    # Calculate kinetic energy in parallel: KE = 0.5 * m * v^2
-    kinetic_energies = zeros(Float64, nthreads())
+#     # Calculate kinetic energy in parallel: KE = 0.5 * m * v^2
+#     kinetic_energies = zeros(Float64, nthreads())
     
-    @threads for i in 1:n
-        thread_id = threadid()
-        body = system.bodies[i]
-        v_squared = sum(body.velocity.^2)
-        kinetic_energies[thread_id] += 0.5 * body.mass * v_squared
-    end
+#     @threads for i in 1:n
+#         thread_id = threadid()
+#         body = system.bodies[i]
+#         v_squared = sum(body.velocity.^2)
+#         kinetic_energies[thread_id] += 0.5 * body.mass * v_squared
+#     end
     
-    kinetic_energy = sum(kinetic_energies)
+#     kinetic_energy = sum(kinetic_energies)
     
-    # For potential energy, we need to be careful with parallelization
-    # because of the double loop. We'll use atomic operations for thread safety.
-    potential_energy_chunks = zeros(Float64, nthreads())
+#     # For potential energy, we need to be careful with parallelization
+#     # because of the double loop. We'll use atomic operations for thread safety.
+#     potential_energy_chunks = zeros(Float64, nthreads())
     
-    # Each thread handles a chunk of the outer loop
-    @threads for i in 1:(n-1)
-        thread_id = threadid()
-        local_potential = 0.0
+#     # Each thread handles a chunk of the outer loop
+#     @threads for i in 1:(n-1)
+#         thread_id = threadid()
+#         local_potential = 0.0
         
-        for j in (i+1):n
-            body_i = system.bodies[i]
-            body_j = system.bodies[j]
+#         for j in (i+1):n
+#             body_i = system.bodies[i]
+#             body_j = system.bodies[j]
             
-            r_vec = body_j.position - body_i.position
-            r = sqrt(sum(r_vec.^2) + ε^2)  # Softened distance
+#             r_vec = body_j.position - body_i.position
+#             r = sqrt(sum(r_vec.^2) + ε^2)  # Softened distance
             
-            local_potential -= G * body_i.mass * body_j.mass / r
-        end
+#             local_potential -= G * body_i.mass * body_j.mass / r
+#         end
         
-        potential_energy_chunks[thread_id] += local_potential
-    end
+#         potential_energy_chunks[thread_id] += local_potential
+#     end
     
-    potential_energy = sum(potential_energy_chunks)
+#     potential_energy = sum(potential_energy_chunks)
     
-    return kinetic_energy + potential_energy
-end
+#     return kinetic_energy + potential_energy
+# end
 
 """
     run_simulation!(system, dt, num_steps)
@@ -224,8 +224,8 @@ Reports thread usage and performance metrics.
 function run_simulation!(system, dt, num_steps)
     println("Running simulation with $(nthreads()) threads")
     
-    initial_energy = calculate_energy(system)
-    println("Initial total energy: ", initial_energy)
+    # initial_energy = calculate_energy(system)
+    # println("Initial total energy: ", initial_energy)
     
     # Start timing
     start_time = time()
@@ -252,10 +252,11 @@ function run_simulation!(system, dt, num_steps)
     end_time = time()
     elapsed = end_time - start_time
     
-    final_energy = calculate_energy(system)
-    println("Final total energy: ", final_energy)
-    println("Energy change: ", final_energy - initial_energy)
-    println("Relative energy change: ", (final_energy - initial_energy) / initial_energy)
+    # final_energy = calculate_energy(system)
+    # println("Final total energy: ", final_energy)
+    # println("Energy change: ", final_energy - initial_energy)
+    # println("Relative energy change: ", (final_energy - initial_energy) / initial_energy)
+    println("bodie[1] %e %e %e", system.bodies[1].position[1], system.bodies[1].position[2], system.bodies[1].position[3])
     println("Simulation completed in $(elapsed) seconds")
     println("Average performance: $(round(num_steps / elapsed, digits=2)) steps/second")
     

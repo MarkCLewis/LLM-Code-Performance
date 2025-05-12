@@ -434,30 +434,30 @@ fn simulate_step_kdtree(bodies: &mut [Body], dt: f64) {
 
 
 // --- Exact Energy Calculation (O(N^2), unchanged, for verification) ---
-fn calculate_total_energy(bodies: &[Body]) -> f64 {
-    let n = bodies.len();
-    let kinetic_energy: f64 = bodies
-        .par_iter()
-        .map(|b| 0.5 * b.mass * b.vel.magnitude_squared())
-        .sum();
+// fn calculate_total_energy(bodies: &[Body]) -> f64 {
+//     let n = bodies.len();
+//     let kinetic_energy: f64 = bodies
+//         .par_iter()
+//         .map(|b| 0.5 * b.mass * b.vel.magnitude_squared())
+//         .sum();
 
-    let potential_energy: f64 = (0..n)
-        .into_par_iter()
-        .map(|i| {
-            let mut local_potential = 0.0;
-            for j in (i + 1)..n {
-                let dr = bodies[j].pos - bodies[i].pos;
-                let dist_sq = dr.magnitude_squared();
-                let dist = (dist_sq + SOFTENING * SOFTENING).sqrt();
-                 if dist == 0.0 { continue } // Avoid division by zero if softening is zero
-                local_potential -= G * bodies[i].mass * bodies[j].mass / dist;
-            }
-            local_potential
-        })
-        .sum();
+//     let potential_energy: f64 = (0..n)
+//         .into_par_iter()
+//         .map(|i| {
+//             let mut local_potential = 0.0;
+//             for j in (i + 1)..n {
+//                 let dr = bodies[j].pos - bodies[i].pos;
+//                 let dist_sq = dr.magnitude_squared();
+//                 let dist = (dist_sq + SOFTENING * SOFTENING).sqrt();
+//                  if dist == 0.0 { continue } // Avoid division by zero if softening is zero
+//                 local_potential -= G * bodies[i].mass * bodies[j].mass / dist;
+//             }
+//             local_potential
+//         })
+//         .sum();
 
-    kinetic_energy + potential_energy
-}
+//     kinetic_energy + potential_energy
+// }
 
 
 // --- Initialization (Unchanged) ---
@@ -538,11 +538,11 @@ fn main() {
     println!("Initialization complete ({:.2?} total bodies) in {:.2?}", bodies.len(), init_duration);
 
 
-    println!("Calculating initial energy (parallel O(N^2))..."); // Still exact calculation
-    let start_energy = Instant::now();
-    let initial_energy = calculate_total_energy(&bodies);
-    let energy_duration = start_energy.elapsed();
-    println!("Initial Total Energy: {:.6e} (calculated in {:.2?})", initial_energy, energy_duration);
+    // println!("Calculating initial energy (parallel O(N^2))..."); // Still exact calculation
+    // let start_energy = Instant::now();
+    // let initial_energy = calculate_total_energy(&bodies);
+    // let energy_duration = start_energy.elapsed();
+    // println!("Initial Total Energy: {:.6e} (calculated in {:.2?})", initial_energy, energy_duration);
 
 
     println!("Starting simulation using kD-Tree...");
@@ -564,35 +564,43 @@ fn main() {
                  elapsed_total
              );
              // Energy check less frequently, as it's O(N^2) and simulation is approximate
-             if (step + 1) % 100 == 0 {
-                  let energy_check_start = Instant::now();
-                  let current_energy = calculate_total_energy(&bodies);
-                  let energy_check_duration = energy_check_start.elapsed();
-                  println!(
-                      "  Energy (@step {}): {:.6e} (Check took: {:?})",
-                      step + 1, current_energy, energy_check_duration
-                 );
-             }
+            //  if (step + 1) % 100 == 0 {
+            //       let energy_check_start = Instant::now();
+            //       let current_energy = calculate_total_energy(&bodies);
+            //       let energy_check_duration = energy_check_start.elapsed();
+            //       println!(
+            //           "  Energy (@step {}): {:.6e} (Check took: {:?})",
+            //           step + 1, current_energy, energy_check_duration
+            //      );
+            //  }
         }
     }
     let sim_duration = start_sim.elapsed();
     println!("Simulation finished in {:.2?}", sim_duration);
 
 
-    println!("Calculating final energy (parallel O(N^2))..."); // Still exact calculation
-    let start_energy = Instant::now();
-    let final_energy = calculate_total_energy(&bodies);
-    let energy_duration = start_energy.elapsed();
-    println!("Final Total Energy:   {:.6e} (calculated in {:.2?})", final_energy, energy_duration);
+    // println!("Calculating final energy (parallel O(N^2))..."); // Still exact calculation
+    // let start_energy = Instant::now();
+    // let final_energy = calculate_total_energy(&bodies);
+    // let energy_duration = start_energy.elapsed();
+    // println!("Final Total Energy:   {:.6e} (calculated in {:.2?})", final_energy, energy_duration);
 
-    // Energy comparison will now show drift due to approximation!
-    let energy_diff = final_energy - initial_energy;
-    let relative_energy_diff = if initial_energy.abs() > 1e-12 {
-        (energy_diff / initial_energy).abs()
-    } else {
-        energy_diff.abs()
-    };
-    println!("Absolute Energy Change: {:.6e}", energy_diff);
-    println!("Relative Energy Change: {:.6e} ({:.4}%)", relative_energy_diff, relative_energy_diff * 100.0);
-    println!("NOTE: Energy drift is expected with the approximate Barnes-Hut method.");
+    // // Energy comparison will now show drift due to approximation!
+    // let energy_diff = final_energy - initial_energy;
+    // let relative_energy_diff = if initial_energy.abs() > 1e-12 {
+    //     (energy_diff / initial_energy).abs()
+    // } else {
+    //     energy_diff.abs()
+    // };
+    // println!("Absolute Energy Change: {:.6e}", energy_diff);
+    // println!("Relative Energy Change: {:.6e} ({:.4}%)", relative_energy_diff, relative_energy_diff * 100.0);
+    // println!("NOTE: Energy drift is expected with the approximate Barnes-Hut method.");
+    // Optional: Print final position of a few bodies
+    println!("\nFinal state of first few bodies:");
+    for i in 0..std::cmp::min(5, bodies.len()) {
+        println!("Body {}: Pos=({:.2}, {:.2}, {:.2}), Vel=({:.2}, {:.2}, {:.2})",
+            i,
+            bodies[i].pos.x, bodies[i].pos.y, bodies[i].pos.z,
+            bodies[i].vel.x, bodies[i].vel.y, bodies[i].vel.z);
+    }
 }

@@ -338,101 +338,101 @@ func KickStep(bodies []Body, root *KDNode) {
 }
 
 // CalculateTotalEnergy calculates the total energy of the system (kinetic + potential) using parallel computation
-func CalculateTotalEnergy(bodies []Body) float64 {
-	// Determine the number of goroutines based on CPU cores
-	numCPU := runtime.NumCPU()
-	numGoroutines := numCPU * 2 // Use 2x the number of CPU cores for better utilization
+// func CalculateTotalEnergy(bodies []Body) float64 {
+// 	// Determine the number of goroutines based on CPU cores
+// 	numCPU := runtime.NumCPU()
+// 	numGoroutines := numCPU * 2 // Use 2x the number of CPU cores for better utilization
 
-	// Ensure we don't create more goroutines than bodies
-	if numGoroutines > len(bodies) {
-		numGoroutines = len(bodies)
-	}
+// 	// Ensure we don't create more goroutines than bodies
+// 	if numGoroutines > len(bodies) {
+// 		numGoroutines = len(bodies)
+// 	}
 
-	// Calculate kinetic energy in parallel
-	var keMutex sync.Mutex
-	kineticEnergy := 0.0
+// 	// Calculate kinetic energy in parallel
+// 	var keMutex sync.Mutex
+// 	kineticEnergy := 0.0
 
-	// Wait group for synchronization
-	var wg sync.WaitGroup
-	wg.Add(numGoroutines)
+// 	// Wait group for synchronization
+// 	var wg sync.WaitGroup
+// 	wg.Add(numGoroutines)
 
-	// Calculate the chunk size for each goroutine
-	chunkSize := len(bodies) / numGoroutines
+// 	// Calculate the chunk size for each goroutine
+// 	chunkSize := len(bodies) / numGoroutines
 
-	// Launch goroutines to calculate kinetic energy
-	for g := 0; g < numGoroutines; g++ {
-		// Calculate start and end indices for this goroutine
-		start := g * chunkSize
-		end := start + chunkSize
-		if g == numGoroutines-1 {
-			end = len(bodies) // Make sure the last goroutine handles any remainder
-		}
+// 	// Launch goroutines to calculate kinetic energy
+// 	for g := 0; g < numGoroutines; g++ {
+// 		// Calculate start and end indices for this goroutine
+// 		start := g * chunkSize
+// 		end := start + chunkSize
+// 		if g == numGoroutines-1 {
+// 			end = len(bodies) // Make sure the last goroutine handles any remainder
+// 		}
 
-		go func(start, end int) {
-			defer wg.Done()
+// 		go func(start, end int) {
+// 			defer wg.Done()
 
-			localKE := 0.0
-			// Calculate kinetic energy: KE = 0.5 * m * v^2
-			for i := start; i < end; i++ {
-				localKE += 0.5 * bodies[i].Mass * bodies[i].Velocity.SqrMagnitude()
-			}
+// 			localKE := 0.0
+// 			// Calculate kinetic energy: KE = 0.5 * m * v^2
+// 			for i := start; i < end; i++ {
+// 				localKE += 0.5 * bodies[i].Mass * bodies[i].Velocity.SqrMagnitude()
+// 			}
 
-			// Update total kinetic energy with mutex protection
-			keMutex.Lock()
-			kineticEnergy += localKE
-			keMutex.Unlock()
-		}(start, end)
-	}
+// 			// Update total kinetic energy with mutex protection
+// 			keMutex.Lock()
+// 			kineticEnergy += localKE
+// 			keMutex.Unlock()
+// 		}(start, end)
+// 	}
 
-	// Wait for kinetic energy calculations to complete
-	wg.Wait()
+// 	// Wait for kinetic energy calculations to complete
+// 	wg.Wait()
 
-	// Calculate potential energy in parallel
-	// For potential energy, we need to handle the double-loop differently
-	potentialEnergy := 0.0
-	var peMutex sync.Mutex
+// 	// Calculate potential energy in parallel
+// 	// For potential energy, we need to handle the double-loop differently
+// 	potentialEnergy := 0.0
+// 	var peMutex sync.Mutex
 
-	// Determine how to divide the work for potential energy calculation
-	// We'll assign each goroutine a chunk of the first loop
-	wg.Add(numGoroutines)
+// 	// Determine how to divide the work for potential energy calculation
+// 	// We'll assign each goroutine a chunk of the first loop
+// 	wg.Add(numGoroutines)
 
-	for g := 0; g < numGoroutines; g++ {
-		// Calculate start and end indices for this goroutine
-		start := g * chunkSize
-		end := start + chunkSize
-		if g == numGoroutines-1 {
-			end = len(bodies) // Make sure the last goroutine handles any remainder
-		}
+// 	for g := 0; g < numGoroutines; g++ {
+// 		// Calculate start and end indices for this goroutine
+// 		start := g * chunkSize
+// 		end := start + chunkSize
+// 		if g == numGoroutines-1 {
+// 			end = len(bodies) // Make sure the last goroutine handles any remainder
+// 		}
 
-		go func(start, end int) {
-			defer wg.Done()
+// 		go func(start, end int) {
+// 			defer wg.Done()
 
-			localPE := 0.0
-			// Calculate potential energy: PE = -G * m1 * m2 / r
-			for i := start; i < end; i++ {
-				for j := i + 1; j < len(bodies); j++ {
-					r := bodies[i].Position.Sub(bodies[j].Position)
-					distance := r.Magnitude()
+// 			localPE := 0.0
+// 			// Calculate potential energy: PE = -G * m1 * m2 / r
+// 			for i := start; i < end; i++ {
+// 				for j := i + 1; j < len(bodies); j++ {
+// 					r := bodies[i].Position.Sub(bodies[j].Position)
+// 					distance := r.Magnitude()
 
-					// Avoid division by zero
-					if distance > 0 {
-						localPE -= G * bodies[i].Mass * bodies[j].Mass / distance
-					}
-				}
-			}
+// 					// Avoid division by zero
+// 					if distance > 0 {
+// 						localPE -= G * bodies[i].Mass * bodies[j].Mass / distance
+// 					}
+// 				}
+// 			}
 
-			// Update total potential energy with mutex protection
-			peMutex.Lock()
-			potentialEnergy += localPE
-			peMutex.Unlock()
-		}(start, end)
-	}
+// 			// Update total potential energy with mutex protection
+// 			peMutex.Lock()
+// 			potentialEnergy += localPE
+// 			peMutex.Unlock()
+// 		}(start, end)
+// 	}
 
-	// Wait for potential energy calculations to complete
-	wg.Wait()
+// 	// Wait for potential energy calculations to complete
+// 	wg.Wait()
 
-	return kineticEnergy + potentialEnergy
-}
+// 	return kineticEnergy + potentialEnergy
+// }
 
 // InitializeSystem creates a system with a central body and smaller bodies on circular orbits
 // Uses parallel processing for generating the bodies
@@ -542,9 +542,9 @@ func main() {
 	fmt.Printf("Small body mass: %.3e kg\n", bodies[1].Mass)
 
 	// Calculate initial energy
-	fmt.Println("Calculating initial energy...")
-	initialEnergy := CalculateTotalEnergy(bodies)
-	fmt.Printf("Initial total energy: %.6e J\n", initialEnergy)
+	// fmt.Println("Calculating initial energy...")
+	// initialEnergy := CalculateTotalEnergy(bodies)
+	// fmt.Printf("Initial total energy: %.6e J\n", initialEnergy)
 
 	// Run simulation for numSteps steps
 	fmt.Printf("Running parallel simulation with Barnes-Hut algorithm (theta=%.2f) for %d steps...\n", theta, numSteps)
@@ -587,13 +587,14 @@ func main() {
 	fmt.Printf("Simulation steps completed in %v\n", simulationTime)
 
 	// Calculate final energy
-	fmt.Println("Calculating final energy...")
-	finalEnergy := CalculateTotalEnergy(bodies)
-	fmt.Printf("Final total energy: %.6e J\n", finalEnergy)
+	// fmt.Println("Calculating final energy...")
+	// finalEnergy := CalculateTotalEnergy(bodies)
+	// fmt.Printf("Final total energy: %.6e J\n", finalEnergy)
 
-	// Calculate energy conservation
-	energyDiff := (finalEnergy - initialEnergy) / initialEnergy
-	fmt.Printf("Energy difference: %.6e (%.6f%%)\n", finalEnergy-initialEnergy, energyDiff*100)
+	// // Calculate energy conservation
+	// energyDiff := (finalEnergy - initialEnergy) / initialEnergy
+	// fmt.Printf("Energy difference: %.6e (%.6f%%)\n", finalEnergy-initialEnergy, energyDiff*100)
+	fmt.Printf("Body[0] %e %e %e", bodies[0].Position.X, bodies[0].Position.Y, bodies[0].Position.Z)
 
 	// Performance metrics
 	totalElapsedTime := time.Since(startTime)

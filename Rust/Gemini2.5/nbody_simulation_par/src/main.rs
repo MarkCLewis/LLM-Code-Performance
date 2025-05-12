@@ -54,34 +54,34 @@ impl Body {
 // --- Simulation Functions ---
 
 /// Calculates the total energy of the system (Kinetic + Potential) in parallel.
-fn calculate_total_energy(bodies: &[Body]) -> f64 {
-    let n = bodies.len();
+// fn calculate_total_energy(bodies: &[Body]) -> f64 {
+//     let n = bodies.len();
 
-    // Parallel calculation of Kinetic Energy
-    let kinetic_energy: f64 = bodies
-        .par_iter() // Use parallel iterator
-        .map(|b| 0.5 * b.mass * b.vel.magnitude_squared())
-        .sum(); // Parallel sum
+//     // Parallel calculation of Kinetic Energy
+//     let kinetic_energy: f64 = bodies
+//         .par_iter() // Use parallel iterator
+//         .map(|b| 0.5 * b.mass * b.vel.magnitude_squared())
+//         .sum(); // Parallel sum
 
-    // Parallel calculation of Potential Energy
-    // Iterate over indices `i`, and for each `i`, sum contributions from `j > i`
-    let potential_energy: f64 = (0..n)
-        .into_par_iter() // Parallelize the outer loop index `i`
-        .map(|i| {
-            let mut local_potential = 0.0;
-            // Inner loop remains sequential for each `i`
-            for j in (i + 1)..n {
-                let dr = bodies[j].pos - bodies[i].pos;
-                let dist_sq = dr.magnitude_squared();
-                let dist = (dist_sq + SOFTENING * SOFTENING).sqrt();
-                local_potential -= G * bodies[i].mass * bodies[j].mass / dist;
-            }
-            local_potential
-        })
-        .sum(); // Parallel sum of results from each `i`
+//     // Parallel calculation of Potential Energy
+//     // Iterate over indices `i`, and for each `i`, sum contributions from `j > i`
+//     let potential_energy: f64 = (0..n)
+//         .into_par_iter() // Parallelize the outer loop index `i`
+//         .map(|i| {
+//             let mut local_potential = 0.0;
+//             // Inner loop remains sequential for each `i`
+//             for j in (i + 1)..n {
+//                 let dr = bodies[j].pos - bodies[i].pos;
+//                 let dist_sq = dr.magnitude_squared();
+//                 let dist = (dist_sq + SOFTENING * SOFTENING).sqrt();
+//                 local_potential -= G * bodies[i].mass * bodies[j].mass / dist;
+//             }
+//             local_potential
+//         })
+//         .sum(); // Parallel sum of results from each `i`
 
-    kinetic_energy + potential_energy
-}
+//     kinetic_energy + potential_energy
+// }
 
 
 /// Performs one step of the simulation using the kick-step method in parallel.
@@ -212,11 +212,11 @@ fn main() {
     println!("Initialization complete ({:.2?} total bodies) in {:.2?}", bodies.len(), init_duration);
 
 
-    println!("Calculating initial energy (parallel)..."); // Updated message
-    let start_energy = Instant::now();
-    let initial_energy = calculate_total_energy(&bodies);
-    let energy_duration = start_energy.elapsed();
-    println!("Initial Total Energy: {:.6e} (calculated in {:.2?})", initial_energy, energy_duration);
+    // println!("Calculating initial energy (parallel)..."); // Updated message
+    // let start_energy = Instant::now();
+    // let initial_energy = calculate_total_energy(&bodies);
+    // let energy_duration = start_energy.elapsed();
+    // println!("Initial Total Energy: {:.6e} (calculated in {:.2?})", initial_energy, energy_duration);
 
 
     println!("Starting simulation...");
@@ -249,20 +249,27 @@ fn main() {
     println!("Simulation finished in {:.2?}", sim_duration);
 
 
-    println!("Calculating final energy (parallel)..."); // Updated message
-    let start_energy = Instant::now();
-    let final_energy = calculate_total_energy(&bodies);
-    let energy_duration = start_energy.elapsed();
-    println!("Final Total Energy:   {:.6e} (calculated in {:.2?})", final_energy, energy_duration);
+    // println!("Calculating final energy (parallel)..."); // Updated message
+    // let start_energy = Instant::now();
+    // let final_energy = calculate_total_energy(&bodies);
+    // let energy_duration = start_energy.elapsed();
+    // println!("Final Total Energy:   {:.6e} (calculated in {:.2?})", final_energy, energy_duration);
 
 
-    let energy_diff = final_energy - initial_energy;
-    let relative_energy_diff = if initial_energy.abs() > 1e-12 {
-        (energy_diff / initial_energy).abs()
-    } else {
-        energy_diff.abs()
-    };
-    println!("Absolute Energy Change: {:.6e}", energy_diff);
-    println!("Relative Energy Change: {:.6e} ({:.4}%)", relative_energy_diff, relative_energy_diff * 100.0);
-
+    // let energy_diff = final_energy - initial_energy;
+    // let relative_energy_diff = if initial_energy.abs() > 1e-12 {
+    //     (energy_diff / initial_energy).abs()
+    // } else {
+    //     energy_diff.abs()
+    // };
+    // println!("Absolute Energy Change: {:.6e}", energy_diff);
+    // println!("Relative Energy Change: {:.6e} ({:.4}%)", relative_energy_diff, relative_energy_diff * 100.0);
+    // Optional: Print final position of a few bodies
+    println!("\nFinal state of first few bodies:");
+    for i in 0..std::cmp::min(5, bodies.len()) {
+        println!("Body {}: Pos=({:.2}, {:.2}, {:.2}), Vel=({:.2}, {:.2}, {:.2})",
+            i,
+            bodies[i].pos.x, bodies[i].pos.y, bodies[i].pos.z,
+            bodies[i].vel.x, bodies[i].vel.y, bodies[i].vel.z);
+    }
 }

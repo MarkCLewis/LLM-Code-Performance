@@ -43,26 +43,26 @@ func calculateForce(bodyI, bodyJ *Body, force *[3]float64) {
 }
 
 // calculateTotalEnergy calculates the total energy of the system.
-func calculateTotalEnergy(s *System) float64 {
-	kineticEnergy := 0.0
-	potentialEnergy := 0.0
+// func calculateTotalEnergy(s *System) float64 {
+// 	kineticEnergy := 0.0
+// 	potentialEnergy := 0.0
 
-	for i := range s.Bodies {
-		// Kinetic energy
-		vSq := s.Bodies[i].Velocity[0]*s.Bodies[i].Velocity[0] +
-			s.Bodies[i].Velocity[1]*s.Bodies[i].Velocity[1] +
-			s.Bodies[i].Velocity[2]*s.Bodies[i].Velocity[2]
-		kineticEnergy += 0.5 * s.Bodies[i].Mass * vSq
+// 	for i := range s.Bodies {
+// 		// Kinetic energy
+// 		vSq := s.Bodies[i].Velocity[0]*s.Bodies[i].Velocity[0] +
+// 			s.Bodies[i].Velocity[1]*s.Bodies[i].Velocity[1] +
+// 			s.Bodies[i].Velocity[2]*s.Bodies[i].Velocity[2]
+// 		kineticEnergy += 0.5 * s.Bodies[i].Mass * vSq
 
-		// Potential energy
-		for j := i + 1; j < len(s.Bodies); j++ {
-			r := math.Sqrt(distanceSquared(&s.Bodies[i], &s.Bodies[j]))
-			potentialEnergy -= (GravitationalConstant * s.Bodies[i].Mass * s.Bodies[j].Mass) / r
-		}
-	}
+// 		// Potential energy
+// 		for j := i + 1; j < len(s.Bodies); j++ {
+// 			r := math.Sqrt(distanceSquared(&s.Bodies[i], &s.Bodies[j]))
+// 			potentialEnergy -= (GravitationalConstant * s.Bodies[i].Mass * s.Bodies[j].Mass) / r
+// 		}
+// 	}
 
-	return kineticEnergy + potentialEnergy
-}
+// 	return kineticEnergy + potentialEnergy
+// }
 
 // initializeCircularOrbits initializes a system with a central body and orbiting smaller bodies.
 func initializeCircularOrbits(numOrbiting int, centralMass, orbitRadius, orbitingMass float64) *System {
@@ -154,8 +154,8 @@ func main() {
 	fmt.Printf("Initial number of bodies: %d\n", len(system.Bodies))
 
 	// Calculate initial energy
-	initialEnergy := calculateTotalEnergy(system)
-	fmt.Printf("Initial total energy: %e J\n", initialEnergy)
+	// initialEnergy := calculateTotalEnergy(system)
+	// fmt.Printf("Initial total energy: %e J\n", initialEnergy)
 
 	// Run the simulation
 	fmt.Printf("Running simulation for %d steps...\n", numSteps)
@@ -170,12 +170,14 @@ func main() {
 	fmt.Printf("Simulation finished in %s.\n", elapsedTime)
 
 	// Calculate final energy
-	finalEnergy := calculateTotalEnergy(system)
-	fmt.Printf("Final total energy: %e J\n", finalEnergy)
+	// finalEnergy := calculateTotalEnergy(system)
+	// fmt.Printf("Final total energy: %e J\n", finalEnergy)
 
-	// Calculate the energy difference
-	energyDifference := math.Abs(finalEnergy - initialEnergy)
-	relativeEnergyDifference := energyDifference / math.Abs(initialEnergy)
-	fmt.Printf("Absolute energy difference: %e J\n", energyDifference)
-	fmt.Printf("Relative energy difference: %e\n", relativeEnergyDifference)
+	// // Calculate the energy difference
+	// energyDifference := math.Abs(finalEnergy - initialEnergy)
+	// relativeEnergyDifference := energyDifference / math.Abs(initialEnergy)
+	// fmt.Printf("Absolute energy difference: %e J\n", energyDifference)
+	// fmt.Printf("Relative energy difference: %e\n", relativeEnergyDifference)
+	fmt.Printf("Body[0] %e %e %e", system.Bodies[0].Position[0], system.Bodies[0].Position[1], system.Bodies[0].Position[2])
+
 }

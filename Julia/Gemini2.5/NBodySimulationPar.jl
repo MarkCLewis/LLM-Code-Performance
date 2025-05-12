@@ -98,58 +98,58 @@ Calculates the total energy (Kinetic + Potential) of the system.
 Potential energy calculation is O(N^2) and parallelized using thread-local storage.
 Kinetic energy (O(N)) is calculated sequentially.
 """
-function calculate_total_energy(positions::Matrix{Float64},
-                                velocities::Matrix{Float64},
-                                masses::Vector{Float64})::Float64
-    N = size(positions, 1)
-    kinetic_energy = 0.0
-    potential_energy = 0.0
+# function calculate_total_energy(positions::Matrix{Float64},
+#                                 velocities::Matrix{Float64},
+#                                 masses::Vector{Float64})::Float64
+#     N = size(positions, 1)
+#     kinetic_energy = 0.0
+#     potential_energy = 0.0
 
-    # Kinetic Energy: KE = sum(0.5 * m_i * |v_i|^2) - O(N)
-    # Calculated sequentially for simplicity, parallelize if it becomes a bottleneck
-    for i in 1:N
-        vel_sq = velocities[i, 1]^2 + velocities[i, 2]^2 + velocities[i, 3]^2
-        kinetic_energy += 0.5 * masses[i] * vel_sq
-    end
+#     # Kinetic Energy: KE = sum(0.5 * m_i * |v_i|^2) - O(N)
+#     # Calculated sequentially for simplicity, parallelize if it becomes a bottleneck
+#     for i in 1:N
+#         vel_sq = velocities[i, 1]^2 + velocities[i, 2]^2 + velocities[i, 3]^2
+#         kinetic_energy += 0.5 * masses[i] * vel_sq
+#     end
 
-    # Potential Energy: PE = sum_{i < j} (-G * m_i * m_j / |r_i - r_j|) - O(N^2)
-    # Parallelized using per-thread accumulators
-    num_threads = Threads.nthreads()
-    pe_partials = zeros(Float64, num_threads) # Storage for each thread's partial sum
+#     # Potential Energy: PE = sum_{i < j} (-G * m_i * m_j / |r_i - r_j|) - O(N^2)
+#     # Parallelized using per-thread accumulators
+#     num_threads = Threads.nthreads()
+#     pe_partials = zeros(Float64, num_threads) # Storage for each thread's partial sum
 
-    Threads.@threads for i in 1:N
-        tid = Threads.threadid()
-        pe_thread = 0.0 # Accumulator local to this thread's work on this 'i' loop
-        # Loop only j > i to avoid double counting and self-interaction
-        for j in (i+1):N
-            dx = positions[j, 1] - positions[i, 1]
-            dy = positions[j, 2] - positions[i, 2]
-            dz = positions[j, 3] - positions[i, 3]
+#     Threads.@threads for i in 1:N
+#         tid = Threads.threadid()
+#         pe_thread = 0.0 # Accumulator local to this thread's work on this 'i' loop
+#         # Loop only j > i to avoid double counting and self-interaction
+#         for j in (i+1):N
+#             dx = positions[j, 1] - positions[i, 1]
+#             dy = positions[j, 2] - positions[i, 2]
+#             dz = positions[j, 3] - positions[i, 3]
 
-            dist_sq = dx^2 + dy^2 + dz^2 + SOFTENING_SQ
-            dist = sqrt(dist_sq)
+#             dist_sq = dx^2 + dy^2 + dz^2 + SOFTENING_SQ
+#             dist = sqrt(dist_sq)
 
-            pe_thread -= G * masses[i] * masses[j] / dist
-        end
-        # Accumulate the result for this 'i' into the thread's partial sum storage
-        # Note: This+= operation on pe_partials[tid] is NOT atomic, but it's safe
-        # because each thread only writes to its own index 'tid'.
-        # However, multiple 'i' iterations run by the same thread will accumulate correctly.
-        # A cleaner way might be to sum pe_thread within the thread and add once at the end,
-        # but this accumulation should also work correctly with @threads partitioning.
-        # Let's use an atomic add just to be explicitly safe if multiple iterations for
-        # the same thread were interleaved in some unexpected scheduler way, though unlikely
-        # for simple loop partitioning. Or stick to the simpler += as race conditions
-        # between iterations assigned to the *same thread* are not the primary concern.
-        # Sticking with += as it's likely correct and avoids atomic overhead.
-        pe_partials[tid] += pe_thread
-    end
+#             pe_thread -= G * masses[i] * masses[j] / dist
+#         end
+#         # Accumulate the result for this 'i' into the thread's partial sum storage
+#         # Note: This+= operation on pe_partials[tid] is NOT atomic, but it's safe
+#         # because each thread only writes to its own index 'tid'.
+#         # However, multiple 'i' iterations run by the same thread will accumulate correctly.
+#         # A cleaner way might be to sum pe_thread within the thread and add once at the end,
+#         # but this accumulation should also work correctly with @threads partitioning.
+#         # Let's use an atomic add just to be explicitly safe if multiple iterations for
+#         # the same thread were interleaved in some unexpected scheduler way, though unlikely
+#         # for simple loop partitioning. Or stick to the simpler += as race conditions
+#         # between iterations assigned to the *same thread* are not the primary concern.
+#         # Sticking with += as it's likely correct and avoids atomic overhead.
+#         pe_partials[tid] += pe_thread
+#     end
 
-    # Sum the partial potential energies from all threads
-    potential_energy = sum(pe_partials)
+#     # Sum the partial potential energies from all threads
+#     potential_energy = sum(pe_partials)
 
-    return kinetic_energy + potential_energy
-end
+#     return kinetic_energy + potential_energy
+# end
 
 
 # --- Initialization ---
@@ -247,9 +247,9 @@ function run_simulation(num_bodies_orbiting::Int, num_steps::Int, dt::Float64)
     println("Initialization complete.")
 
     # Energy check before simulation
-    println("Calculating initial energy...")
-    initial_energy = calculate_total_energy(positions, velocities, masses) # Uses threaded PE calc
-    @printf("Initial Total Energy: %.6e\n", initial_energy)
+    # println("Calculating initial energy...")
+    # initial_energy = calculate_total_energy(positions, velocities, masses) # Uses threaded PE calc
+    # @printf("Initial Total Energy: %.6e\n", initial_energy)
     println("---------------------------------")
 
     # --- Simulation Loop ---
@@ -273,19 +273,20 @@ function run_simulation(num_bodies_orbiting::Int, num_steps::Int, dt::Float64)
     println("---------------------------------")
 
     # Energy check after simulation
-    println("Calculating final energy...")
-    final_energy = calculate_total_energy(positions, velocities, masses) # Uses threaded PE calc
-    @printf("Final Total Energy:   %.6e\n", final_energy)
+    # println("Calculating final energy...")
+    # final_energy = calculate_total_energy(positions, velocities, masses) # Uses threaded PE calc
+    # @printf("Final Total Energy:   %.6e\n", final_energy)
 
-    # Accuracy check
-    energy_diff = abs(final_energy - initial_energy)
-    relative_error = if abs(initial_energy) > 1e-12
-        energy_diff / abs(initial_energy)
-    else
-        energy_diff
-    end
-    @printf("Absolute Energy Difference: %.6e\n", energy_diff)
-    @printf("Relative Energy Error: %.6e (%.4f%%)\n", relative_error, relative_error * 100)
+    # # Accuracy check
+    # energy_diff = abs(final_energy - initial_energy)
+    # relative_error = if abs(initial_energy) > 1e-12
+    #     energy_diff / abs(initial_energy)
+    # else
+    #     energy_diff
+    # end
+    # @printf("Absolute Energy Difference: %.6e\n", energy_diff)
+    # @printf("Relative Energy Error: %.6e (%.4f%%)\n", relative_error, relative_error * 100)
+    println("bodie[1] %e %e %e", positions[1, 1], positions[1, 2], positions[1, 3])
     println("---------------------------------")
     @printf("Total Simulation Time: %.3f seconds\n", total_time)
     println("--- N-Body Simulation End ---")

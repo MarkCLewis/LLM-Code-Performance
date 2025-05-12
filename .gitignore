@@ -348,3 +348,8 @@ Cargo.lock
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,rust,java,c,c++,go,julia,python
+
+.bsp/
+.metals/
+.scala-build/
+.vscode/

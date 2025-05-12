@@ -84,37 +84,37 @@ function update_bodies!(bodies)
     end
 end
 
-function compute_energy(bodies)
-    n = length(bodies)
-    kinetic = zeros(Float64, n)
-    potential = zeros(Float64, n)
+# function compute_energy(bodies)
+#     n = length(bodies)
+#     kinetic = zeros(Float64, n)
+#     potential = zeros(Float64, n)
 
-    Threads.@threads for i in 1:n
-        bi = bodies[i]
-        kinetic[i] = 0.5 * bi.mass * (bi.vx^2 + bi.vy^2 + bi.vz^2)
+#     Threads.@threads for i in 1:n
+#         bi = bodies[i]
+#         kinetic[i] = 0.5 * bi.mass * (bi.vx^2 + bi.vy^2 + bi.vz^2)
 
-        pot = 0.0
-        for j in i+1:n
-            bj = bodies[j]
-            dx = bi.x - bj.x
-            dy = bi.y - bj.y
-            dz = bi.z - bj.z
-            dist = sqrt(dx^2 + dy^2 + dz^2 + 1e-10)
-            pot -= G * bi.mass * bj.mass / dist
-        end
-        potential[i] = pot
-    end
+#         pot = 0.0
+#         for j in i+1:n
+#             bj = bodies[j]
+#             dx = bi.x - bj.x
+#             dy = bi.y - bj.y
+#             dz = bi.z - bj.z
+#             dist = sqrt(dx^2 + dy^2 + dz^2 + 1e-10)
+#             pot -= G * bi.mass * bj.mass / dist
+#         end
+#         potential[i] = pot
+#     end
 
-    return sum(kinetic) + sum(potential)
-end
+#     return sum(kinetic) + sum(potential)
+# end
 
 function main()
     println("Initializing bodies...")
     bodies = initialize_system(N_BODIES)
 
-    println("Computing initial energy...")
-    energy0 = compute_energy(bodies)
-    @printf("Initial energy: %.6e\n", energy0)
+    # println("Computing initial energy...")
+    # energy0 = compute_energy(bodies)
+    # @printf("Initial energy: %.6e\n", energy0)
 
     for step in 1:STEPS
         compute_forces!(bodies)
@@ -124,10 +124,11 @@ function main()
         end
     end
 
-    println("Computing final energy...")
-    energy1 = compute_energy(bodies)
-    @printf("Final energy: %.6e\n", energy1)
-    @printf("Energy difference: %.6e\n", abs(energy1 - energy0))
+    # println("Computing final energy...")
+    # energy1 = compute_energy(bodies)
+    # @printf("Final energy: %.6e\n", energy1)
+    # @printf("Energy difference: %.6e\n", abs(energy1 - energy0))
+    println("bodie[1] %e %e %e", bodies[1].x, bodies[1].y, bodies[1].z)
 end
 
 main()

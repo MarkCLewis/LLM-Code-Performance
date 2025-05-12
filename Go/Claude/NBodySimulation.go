@@ -140,30 +140,30 @@ func KickStep(bodies []Body) {
 }
 
 // CalculateTotalEnergy calculates the total energy of the system (kinetic + potential)
-func CalculateTotalEnergy(bodies []Body) float64 {
-	kineticEnergy := 0.0
-	potentialEnergy := 0.0
+// func CalculateTotalEnergy(bodies []Body) float64 {
+// 	kineticEnergy := 0.0
+// 	potentialEnergy := 0.0
 
-	// Calculate kinetic energy: KE = 0.5 * m * v^2
-	for _, body := range bodies {
-		kineticEnergy += 0.5 * body.Mass * body.Velocity.SqrMagnitude()
-	}
+// 	// Calculate kinetic energy: KE = 0.5 * m * v^2
+// 	for _, body := range bodies {
+// 		kineticEnergy += 0.5 * body.Mass * body.Velocity.SqrMagnitude()
+// 	}
 
-	// Calculate potential energy: PE = -G * m1 * m2 / r
-	for i := 0; i < len(bodies); i++ {
-		for j := i + 1; j < len(bodies); j++ {
-			r := bodies[i].Position.Sub(bodies[j].Position)
-			distance := r.Magnitude()
+// 	// Calculate potential energy: PE = -G * m1 * m2 / r
+// 	for i := 0; i < len(bodies); i++ {
+// 		for j := i + 1; j < len(bodies); j++ {
+// 			r := bodies[i].Position.Sub(bodies[j].Position)
+// 			distance := r.Magnitude()
 
-			// Avoid division by zero
-			if distance > 0 {
-				potentialEnergy -= G * bodies[i].Mass * bodies[j].Mass / distance
-			}
-		}
-	}
+// 			// Avoid division by zero
+// 			if distance > 0 {
+// 				potentialEnergy -= G * bodies[i].Mass * bodies[j].Mass / distance
+// 			}
+// 		}
+// 	}
 
-	return kineticEnergy + potentialEnergy
-}
+// 	return kineticEnergy + potentialEnergy
+// }
 
 // InitializeSystem creates a system with a central body and smaller bodies on circular orbits
 func InitializeSystem(numSmallBodies int) []Body {
@@ -229,8 +229,8 @@ func main() {
 	fmt.Printf("Small body mass: %.3e kg\n", bodies[1].Mass)
 
 	// Calculate initial energy
-	initialEnergy := CalculateTotalEnergy(bodies)
-	fmt.Printf("Initial total energy: %.6e J\n", initialEnergy)
+	// initialEnergy := CalculateTotalEnergy(bodies)
+	// fmt.Printf("Initial total energy: %.6e J\n", initialEnergy)
 
 	// Run simulation for numSteps steps
 	fmt.Printf("Running simulation for %d steps...\n", numSteps)
@@ -242,12 +242,13 @@ func main() {
 	}
 
 	// Calculate final energy
-	finalEnergy := CalculateTotalEnergy(bodies)
-	fmt.Printf("Final total energy: %.6e J\n", finalEnergy)
+	// finalEnergy := CalculateTotalEnergy(bodies)
+	// fmt.Printf("Final total energy: %.6e J\n", finalEnergy)
 
-	// Calculate energy conservation
-	energyDiff := (finalEnergy - initialEnergy) / initialEnergy
-	fmt.Printf("Energy difference: %.6e (%.6f%%)\n", finalEnergy-initialEnergy, energyDiff*100)
+	// // Calculate energy conservation
+	// energyDiff := (finalEnergy - initialEnergy) / initialEnergy
+	// fmt.Printf("Energy difference: %.6e (%.6f%%)\n", finalEnergy-initialEnergy, energyDiff*100)
+	fmt.Printf("Body[0] %e %e %e", bodies[0].Position.X, bodies[0].Position.Y, bodies[0].Position.Z)
 
 	// Print execution time
 	elapsedTime := time.Since(startTime)

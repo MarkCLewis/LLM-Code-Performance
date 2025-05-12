@@ -118,29 +118,29 @@ fn update_bodies(bodies: &mut Vec<Body>) {
     }
 }
 
-fn compute_energy(bodies: &Vec<Body>) -> f64 {
-    let mut kinetic = 0.0;
-    let mut potential = 0.0;
-    let n = bodies.len();
-    for i in 0..n {
-        let v2 = bodies[i].vel.norm_squared();
-        kinetic += 0.5 * bodies[i].mass * v2;
-        for j in (i + 1)..n {
-            let dx = bodies[i].pos.sub(&bodies[j].pos);
-            let dist = (dx.norm_squared() + EPS2).sqrt();
-            potential -= G * bodies[i].mass * bodies[j].mass / dist;
-        }
-    }
-    kinetic + potential
-}
+// fn compute_energy(bodies: &Vec<Body>) -> f64 {
+//     let mut kinetic = 0.0;
+//     let mut potential = 0.0;
+//     let n = bodies.len();
+//     for i in 0..n {
+//         let v2 = bodies[i].vel.norm_squared();
+//         kinetic += 0.5 * bodies[i].mass * v2;
+//         for j in (i + 1)..n {
+//             let dx = bodies[i].pos.sub(&bodies[j].pos);
+//             let dist = (dx.norm_squared() + EPS2).sqrt();
+//             potential -= G * bodies[i].mass * bodies[j].mass / dist;
+//         }
+//     }
+//     kinetic + potential
+// }
 
 fn main() {
     println!("Initializing system...");
     let mut bodies = initialize_system(N_BODIES);
 
-    println!("Calculating initial energy...");
-    let initial_energy = compute_energy(&bodies);
-    println!("Initial energy: {:.6e}", initial_energy);
+    // println!("Calculating initial energy...");
+    // let initial_energy = compute_energy(&bodies);
+    // println!("Initial energy: {:.6e}", initial_energy);
 
     for step in 0..STEPS {
         compute_forces(&mut bodies);
@@ -150,8 +150,11 @@ fn main() {
         }
     }
 
-    println!("Calculating final energy...");
-    let final_energy = compute_energy(&bodies);
-    println!("Final energy: {:.6e}", final_energy);
-    println!("Energy difference: {:.6e}", (final_energy - initial_energy).abs());
+    // println!("Calculating final energy...");
+    // let final_energy = compute_energy(&bodies);
+    // println!("Final energy: {:.6e}", final_energy);
+    // println!("Energy difference: {:.6e}", (final_energy - initial_energy).abs());
+    println!("{}", bodies[0].pos.x);
+    println!("{}", bodies[0].pos.y);
+    println!("{}", bodies[0].pos.z)
 }

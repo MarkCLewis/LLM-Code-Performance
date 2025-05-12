@@ -357,35 +357,35 @@ end
 Calculate the total energy (kinetic + potential) of the system.
 Uses multithreading and avoids unnecessary calculations.
 """
-function calculate_energy(system::System)
-    n = length(system.bodies)
+# function calculate_energy(system::System)
+#     n = length(system.bodies)
     
-    # Reset energy chunks
-    fill!(system.energy_chunks, 0.0)
+#     # Reset energy chunks
+#     fill!(system.energy_chunks, 0.0)
     
-    # Calculate kinetic and potential energy in one pass for better cache efficiency
-    @threads for i in 1:n
-        thread_id = threadid()
+#     # Calculate kinetic and potential energy in one pass for better cache efficiency
+#     @threads for i in 1:n
+#         thread_id = threadid()
         
-        # Calculate kinetic energy for this body
-        @inbounds body_i = system.bodies[i]
-        v_squared = sum(body_i.velocity.^2)
-        system.energy_chunks[thread_id] += 0.5 * body_i.mass * v_squared
+#         # Calculate kinetic energy for this body
+#         @inbounds body_i = system.bodies[i]
+#         v_squared = sum(body_i.velocity.^2)
+#         system.energy_chunks[thread_id] += 0.5 * body_i.mass * v_squared
         
-        # Calculate potential energy with all remaining bodies
-        @inbounds for j in (i+1):n
-            body_j = system.bodies[j]
+#         # Calculate potential energy with all remaining bodies
+#         @inbounds for j in (i+1):n
+#             body_j = system.bodies[j]
             
-            r_vec = body_j.position - body_i.position
-            r = sqrt(sum(r_vec.^2) + EPSILON^2)  # Softened distance
+#             r_vec = body_j.position - body_i.position
+#             r = sqrt(sum(r_vec.^2) + EPSILON^2)  # Softened distance
             
-            system.energy_chunks[thread_id] -= G * body_i.mass * body_j.mass / r
-        end
-    end
+#             system.energy_chunks[thread_id] -= G * body_i.mass * body_j.mass / r
+#         end
+#     end
     
-    # Sum up all energy chunks
-    return sum(system.energy_chunks)
-end
+#     # Sum up all energy chunks
+#     return sum(system.energy_chunks)
+# end
 
 """
     run_simulation!(system, dt, num_steps, theta)
@@ -398,8 +398,8 @@ function run_simulation!(system::System, dt::Float64, num_steps::Int, theta::Flo
     println("Running simulation with $(nthreads()) threads")
     println("Using Barnes-Hut approximation with theta = $theta")
     
-    initial_energy = calculate_energy(system)
-    println("Initial total energy: ", initial_energy)
+    # initial_energy = calculate_energy(system)
+    # println("Initial total energy: ", initial_energy)
     
     # Pre-compute half time step and store frequently used values
     half_dt = dt/2
@@ -433,10 +433,11 @@ function run_simulation!(system::System, dt::Float64, num_steps::Int, theta::Flo
     end_time = time()
     elapsed = end_time - start_time
     
-    final_energy = calculate_energy(system)
-    println("Final total energy: ", final_energy)
-    println("Energy change: ", final_energy - initial_energy)
-    println("Relative energy change: ", (final_energy - initial_energy) / initial_energy)
+    # final_energy = calculate_energy(system)
+    # println("Final total energy: ", final_energy)
+    # println("Energy change: ", final_energy - initial_energy)
+    # println("Relative energy change: ", (final_energy - initial_energy) / initial_energy)
+    println("bodie[1] %e %e %e", system.bodies[1].position[1], system.bodies[1].position[2], system.bodies[1].position[3])
     println("Simulation completed in $(elapsed) seconds")
     println("Average performance: $(round(num_steps / elapsed, digits=2)) steps/second")
     

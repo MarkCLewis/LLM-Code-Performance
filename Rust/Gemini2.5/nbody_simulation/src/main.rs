@@ -116,27 +116,27 @@ impl Body {
 // --- Simulation Functions ---
 
 /// Calculates the total energy of the system (Kinetic + Potential).
-fn calculate_total_energy(bodies: &[Body]) -> f64 {
-    let mut kinetic_energy = 0.0;
-    let mut potential_energy = 0.0;
-    let n = bodies.len();
+// fn calculate_total_energy(bodies: &[Body]) -> f64 {
+//     let mut kinetic_energy = 0.0;
+//     let mut potential_energy = 0.0;
+//     let n = bodies.len();
 
-    for i in 0..n {
-        // Kinetic Energy: 0.5 * m * v^2
-        kinetic_energy += 0.5 * bodies[i].mass * bodies[i].vel.magnitude_squared();
+//     for i in 0..n {
+//         // Kinetic Energy: 0.5 * m * v^2
+//         kinetic_energy += 0.5 * bodies[i].mass * bodies[i].vel.magnitude_squared();
 
-        // Potential Energy: -G * m_i * m_j / |r_i - r_j|
-        // Sum over pairs (i < j) to avoid double counting and self-interaction
-        for j in (i + 1)..n {
-            let dr = bodies[j].pos - bodies[i].pos;
-            let dist_sq = dr.magnitude_squared();
-            let dist = (dist_sq + SOFTENING * SOFTENING).sqrt(); // Add softening
-            potential_energy -= G * bodies[i].mass * bodies[j].mass / dist;
-        }
-    }
+//         // Potential Energy: -G * m_i * m_j / |r_i - r_j|
+//         // Sum over pairs (i < j) to avoid double counting and self-interaction
+//         for j in (i + 1)..n {
+//             let dr = bodies[j].pos - bodies[i].pos;
+//             let dist_sq = dr.magnitude_squared();
+//             let dist = (dist_sq + SOFTENING * SOFTENING).sqrt(); // Add softening
+//             potential_energy -= G * bodies[i].mass * bodies[j].mass / dist;
+//         }
+//     }
 
-    kinetic_energy + potential_energy
-}
+//     kinetic_energy + potential_energy
+// }
 
 /// Performs one step of the simulation using the kick-step (Euler-Cromer) method.
 fn simulate_step(bodies: &mut [Body], dt: f64) {
@@ -266,9 +266,9 @@ fn main() {
     println!("Initialization complete ({:.2?} total bodies) in {:.2?}", bodies.len(), init_duration);
 
 
-    println!("Calculating initial energy...");
-    let initial_energy = calculate_total_energy(&bodies);
-    println!("Initial Total Energy: {:.6e}", initial_energy);
+    // println!("Calculating initial energy...");
+    // let initial_energy = calculate_total_energy(&bodies);
+    // println!("Initial Total Energy: {:.6e}", initial_energy);
 
 
     println!("Starting simulation...");
@@ -296,25 +296,25 @@ fn main() {
     println!("Simulation finished in {:.2?}", sim_duration);
 
 
-    println!("Calculating final energy...");
-    let final_energy = calculate_total_energy(&bodies);
-    println!("Final Total Energy:   {:.6e}", final_energy);
+    // println!("Calculating final energy...");
+    // let final_energy = calculate_total_energy(&bodies);
+    // println!("Final Total Energy:   {:.6e}", final_energy);
 
-    let energy_diff = final_energy - initial_energy;
-    let relative_energy_diff = if initial_energy.abs() > 1e-12 {
-        (energy_diff / initial_energy).abs()
-    } else {
-        energy_diff.abs() // Avoid division by zero if initial energy is near zero
-    };
-    println!("Absolute Energy Change: {:.6e}", energy_diff);
-    println!("Relative Energy Change: {:.6e} ({:.4}%)", relative_energy_diff, relative_energy_diff * 100.0);
+    // let energy_diff = final_energy - initial_energy;
+    // let relative_energy_diff = if initial_energy.abs() > 1e-12 {
+    //     (energy_diff / initial_energy).abs()
+    // } else {
+    //     energy_diff.abs() // Avoid division by zero if initial energy is near zero
+    // };
+    // println!("Absolute Energy Change: {:.6e}", energy_diff);
+    // println!("Relative Energy Change: {:.6e} ({:.4}%)", relative_energy_diff, relative_energy_diff * 100.0);
 
     // Optional: Print final position of a few bodies
-    // println!("\nFinal state of first few bodies:");
-    // for i in 0..std::cmp::min(5, bodies.len()) {
-    //     println!("Body {}: Pos=({:.2}, {:.2}, {:.2}), Vel=({:.2}, {:.2}, {:.2})",
-    //         i,
-    //         bodies[i].pos.x, bodies[i].pos.y, bodies[i].pos.z,
-    //         bodies[i].vel.x, bodies[i].vel.y, bodies[i].vel.z);
-    // }
+    println!("\nFinal state of first few bodies:");
+    for i in 0..std::cmp::min(5, bodies.len()) {
+        println!("Body {}: Pos=({:.2}, {:.2}, {:.2}), Vel=({:.2}, {:.2}, {:.2})",
+            i,
+            bodies[i].pos.x, bodies[i].pos.y, bodies[i].pos.z,
+            bodies[i].vel.x, bodies[i].vel.y, bodies[i].vel.z);
+    }
 }

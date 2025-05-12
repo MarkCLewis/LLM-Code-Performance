@@ -280,39 +280,39 @@ end
 # so the energy calculated by THIS function will NOT be conserved by the simulation dynamics.
 # It serves as a baseline reference.
 
-function calculate_total_energy(positions::Matrix{Float64},
-                                velocities::Matrix{Float64},
-                                masses::Vector{Float64})::Float64
-    N = size(positions, 1)
-    kinetic_energy = 0.0
+# function calculate_total_energy(positions::Matrix{Float64},
+#                                 velocities::Matrix{Float64},
+#                                 masses::Vector{Float64})::Float64
+#     N = size(positions, 1)
+#     kinetic_energy = 0.0
 
-    # Kinetic Energy (O(N)) - Sequential
-    for i in 1:N
-        vel_sq = velocities[i, 1]^2 + velocities[i, 2]^2 + velocities[i, 3]^2
-        kinetic_energy += 0.5 * masses[i] * vel_sq
-    end
+#     # Kinetic Energy (O(N)) - Sequential
+#     for i in 1:N
+#         vel_sq = velocities[i, 1]^2 + velocities[i, 2]^2 + velocities[i, 3]^2
+#         kinetic_energy += 0.5 * masses[i] * vel_sq
+#     end
 
-    # Exact Potential Energy (O(N^2)) - Parallelized
-    num_threads = Threads.nthreads()
-    pe_partials = zeros(Float64, num_threads)
+#     # Exact Potential Energy (O(N^2)) - Parallelized
+#     num_threads = Threads.nthreads()
+#     pe_partials = zeros(Float64, num_threads)
 
-    Threads.@threads for i in 1:N
-        tid = Threads.threadid()
-        pe_thread = 0.0
-        for j in (i+1):N
-            dx = positions[j, 1] - positions[i, 1]
-            dy = positions[j, 2] - positions[i, 2]
-            dz = positions[j, 3] - positions[i, 3]
-            dist_sq = dx^2 + dy^2 + dz^2 + SOFTENING_SQ
-            dist = sqrt(dist_sq)
-            pe_thread -= G * masses[i] * masses[j] / dist
-        end
-        pe_partials[tid] += pe_thread
-    end
-    potential_energy = sum(pe_partials)
+#     Threads.@threads for i in 1:N
+#         tid = Threads.threadid()
+#         pe_thread = 0.0
+#         for j in (i+1):N
+#             dx = positions[j, 1] - positions[i, 1]
+#             dy = positions[j, 2] - positions[i, 2]
+#             dz = positions[j, 3] - positions[i, 3]
+#             dist_sq = dx^2 + dy^2 + dz^2 + SOFTENING_SQ
+#             dist = sqrt(dist_sq)
+#             pe_thread -= G * masses[i] * masses[j] / dist
+#         end
+#         pe_partials[tid] += pe_thread
+#     end
+#     potential_energy = sum(pe_partials)
 
-    return kinetic_energy + potential_energy
-end
+#     return kinetic_energy + potential_energy
+# end
 
 
 # --- Initialization --- (No changes needed here)
@@ -385,9 +385,9 @@ function run_simulation(num_bodies_orbiting::Int, num_steps::Int, dt::Float64)
     accelerations = zeros(Float64, N_total, 3)
     println("Initialization complete.")
 
-    println("Calculating initial exact energy (Reference)...")
-    initial_energy = calculate_total_energy(positions, velocities, masses) # Exact O(N^2) calc
-    @printf("Initial Exact Energy: %.6e\n", initial_energy)
+    # println("Calculating initial exact energy (Reference)...")
+    # initial_energy = calculate_total_energy(positions, velocities, masses) # Exact O(N^2) calc
+    # @printf("Initial Exact Energy: %.6e\n", initial_energy)
     println("---------------------------------")
 
     println("Starting simulation loop...")
@@ -415,22 +415,23 @@ function run_simulation(num_bodies_orbiting::Int, num_steps::Int, dt::Float64)
     println("Simulation loop finished.")
     println("---------------------------------")
 
-    println("Calculating final exact energy (Reference)...")
-    final_energy = calculate_total_energy(positions, velocities, masses) # Exact O(N^2) calc
-    @printf("Final Exact Energy:   %.6e\n", final_energy)
+    # println("Calculating final exact energy (Reference)...")
+    # final_energy = calculate_total_energy(positions, velocities, masses) # Exact O(N^2) calc
+    # @printf("Final Exact Energy:   %.6e\n", final_energy)
 
-    energy_diff = abs(final_energy - initial_energy)
-    relative_error = if abs(initial_energy) > 1e-12
-        energy_diff / abs(initial_energy)
-    else
-        energy_diff
-    end
-    println("** NOTE: Energy calculated using exact O(N^2) method. **")
-    println("** Simulation used approximate O(N log N) tree forces. **")
-    println("** Therefore, this energy difference reflects the **")
-    println("** approximation error, not just numerical integration error. **")
-    @printf("Absolute Exact Energy Difference: %.6e\n", energy_diff)
-    @printf("Relative Exact Energy Error: %.6e (%.4f%%)\n", relative_error, relative_error * 100)
+    # energy_diff = abs(final_energy - initial_energy)
+    # relative_error = if abs(initial_energy) > 1e-12
+    #     energy_diff / abs(initial_energy)
+    # else
+    #     energy_diff
+    # end
+    # println("** NOTE: Energy calculated using exact O(N^2) method. **")
+    # println("** Simulation used approximate O(N log N) tree forces. **")
+    # println("** Therefore, this energy difference reflects the **")
+    # println("** approximation error, not just numerical integration error. **")
+    # @printf("Absolute Exact Energy Difference: %.6e\n", energy_diff)
+    # @printf("Relative Exact Energy Error: %.6e (%.4f%%)\n", relative_error, relative_error * 100)
+    println("bodie[1] %e %e %e", positions[1, 1], positions[1, 2], positions[1, 3])
     println("---------------------------------")
     @printf("Total Simulation Time: %.3f seconds\n", total_time)
     println("--- N-Body Simulation End ---")

@@ -38,34 +38,34 @@ func initializeBodies(bodies []Body) {
 	}
 }
 
-func calculateEnergy(bodies []Body) float64 {
-	energy := 0.0
-	var wg sync.WaitGroup
-	var mu sync.Mutex
+// func calculateEnergy(bodies []Body) float64 {
+// 	energy := 0.0
+// 	var wg sync.WaitGroup
+// 	var mu sync.Mutex
 
-	for i := range bodies {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-			kinetic := 0.5 * bodies[i].mass * (bodies[i].vx*bodies[i].vx + bodies[i].vy*bodies[i].vy + bodies[i].vz*bodies[i].vz)
-			potential := 0.0
-			for j := range bodies {
-				if i != j {
-					dx := bodies[i].x - bodies[j].x
-					dy := bodies[i].y - bodies[j].y
-					dz := bodies[i].z - bodies[j].z
-					distance := math.Sqrt(dx*dx + dy*dy + dz*dz)
-					potential -= G * bodies[i].mass * bodies[j].mass / distance
-				}
-			}
-			mu.Lock()
-			energy += kinetic + 0.5*potential
-			mu.Unlock()
-		}(i)
-	}
-	wg.Wait()
-	return energy
-}
+// 	for i := range bodies {
+// 		wg.Add(1)
+// 		go func(i int) {
+// 			defer wg.Done()
+// 			kinetic := 0.5 * bodies[i].mass * (bodies[i].vx*bodies[i].vx + bodies[i].vy*bodies[i].vy + bodies[i].vz*bodies[i].vz)
+// 			potential := 0.0
+// 			for j := range bodies {
+// 				if i != j {
+// 					dx := bodies[i].x - bodies[j].x
+// 					dy := bodies[i].y - bodies[j].y
+// 					dz := bodies[i].z - bodies[j].z
+// 					distance := math.Sqrt(dx*dx + dy*dy + dz*dz)
+// 					potential -= G * bodies[i].mass * bodies[j].mass / distance
+// 				}
+// 			}
+// 			mu.Lock()
+// 			energy += kinetic + 0.5*potential
+// 			mu.Unlock()
+// 		}(i)
+// 	}
+// 	wg.Wait()
+// 	return energy
+// }
 
 func kickStep(bodies []Body) {
 	var wg sync.WaitGroup
@@ -110,13 +110,15 @@ func main() {
 	bodies := make([]Body, NumBodies)
 	initializeBodies(bodies)
 
-	initialEnergy := calculateEnergy(bodies)
-	fmt.Printf("Initial energy: %e\n", initialEnergy)
+	// initialEnergy := calculateEnergy(bodies)
+	// fmt.Printf("Initial energy: %e\n", initialEnergy)
 
 	for step := 0; step < 100; step++ {
 		kickStep(bodies)
 	}
 
-	finalEnergy := calculateEnergy(bodies)
-	fmt.Printf("Final energy: %e\n", finalEnergy)
+	// finalEnergy := calculateEnergy(bodies)
+	// fmt.Printf("Final energy: %e\n", finalEnergy)
+	fmt.Printf("Body[0] %e %e %e", bodies[0].x, bodies[0].y, bodies[0].z)
+
 }

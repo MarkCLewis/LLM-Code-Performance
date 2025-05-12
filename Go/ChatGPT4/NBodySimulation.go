@@ -93,34 +93,34 @@ func kickStep(n int) {
 	}
 }
 
-func calculateEnergy(n int) float64 {
-	kinetic, potential := 0.0, 0.0
+// func calculateEnergy(n int) float64 {
+// 	kinetic, potential := 0.0, 0.0
 
-	for i := 0; i <= n; i++ {
-		v2 := bodies[i].VX*bodies[i].VX + bodies[i].VY*bodies[i].VY + bodies[i].VZ*bodies[i].VZ
-		kinetic += 0.5 * bodies[i].Mass * v2
-	}
+// 	for i := 0; i <= n; i++ {
+// 		v2 := bodies[i].VX*bodies[i].VX + bodies[i].VY*bodies[i].VY + bodies[i].VZ*bodies[i].VZ
+// 		kinetic += 0.5 * bodies[i].Mass * v2
+// 	}
 
-	for i := 0; i <= n; i++ {
-		for j := i + 1; j <= n; j++ {
-			dx := bodies[i].X - bodies[j].X
-			dy := bodies[i].Y - bodies[j].Y
-			dz := bodies[i].Z - bodies[j].Z
-			dist := math.Sqrt(dx*dx + dy*dy + dz*dz + 1e-10)
-			potential -= G * bodies[i].Mass * bodies[j].Mass / dist
-		}
-	}
-	return kinetic + potential
-}
+// 	for i := 0; i <= n; i++ {
+// 		for j := i + 1; j <= n; j++ {
+// 			dx := bodies[i].X - bodies[j].X
+// 			dy := bodies[i].Y - bodies[j].Y
+// 			dz := bodies[i].Z - bodies[j].Z
+// 			dist := math.Sqrt(dx*dx + dy*dy + dz*dz + 1e-10)
+// 			potential -= G * bodies[i].Mass * bodies[j].Mass / dist
+// 		}
+// 	}
+// 	return kinetic + potential
+// }
 
 func main() {
 	start := time.Now()
 	fmt.Println("Initializing system...")
 	initializeSystem(N)
 
-	fmt.Println("Calculating initial energy...")
-	initialEnergy := calculateEnergy(N)
-	fmt.Printf("Initial total energy: %.6e\n", initialEnergy)
+	// fmt.Println("Calculating initial energy...")
+	// initialEnergy := calculateEnergy(N)
+	// fmt.Printf("Initial total energy: %.6e\n", initialEnergy)
 
 	for step := 0; step < STEPS; step++ {
 		kickStep(N)
@@ -129,10 +129,11 @@ func main() {
 		}
 	}
 
-	fmt.Println("Calculating final energy...")
-	finalEnergy := calculateEnergy(N)
-	fmt.Printf("Final total energy: %.6e\n", finalEnergy)
-	fmt.Printf("Energy difference:  %.6e\n", math.Abs(finalEnergy-initialEnergy))
+	// fmt.Println("Calculating final energy...")
+	// finalEnergy := calculateEnergy(N)
+	// fmt.Printf("Final total energy: %.6e\n", finalEnergy)
+	// fmt.Printf("Energy difference:  %.6e\n", math.Abs(finalEnergy-initialEnergy))
+	fmt.Printf("Body[0] %e %e %e", bodies[0].X, bodies[0].Y, bodies[0].Z)
 
 	fmt.Printf("Simulation completed in %.2f seconds.\n", time.Since(start).Seconds())
 }
