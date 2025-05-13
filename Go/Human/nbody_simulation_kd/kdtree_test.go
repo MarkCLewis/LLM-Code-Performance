@@ -67,9 +67,9 @@ func Test_two_particle_sim(t *testing.T) {
 		indices[i] = i
 	}
 	dt := math.Pi / 1000
-	Simple_sim(parts, dt, 1000)
+	Simple_sim(parts, dt, 1000, 2)
 	fmt.Printf("1000 steps: %e %e, %e %e\n", parts[0].p[0], parts[0].p[1], parts[1].p[0], parts[1].p[1])
-	Simple_sim(parts, dt, 1000)
+	Simple_sim(parts, dt, 1000, 2)
 	fmt.Printf("2000 steps: %e %e, %e %e\n", parts[0].p[0], parts[0].p[1], parts[1].p[0], parts[1].p[1])
 }
 

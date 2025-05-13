@@ -1,0 +1,132 @@
+# N-Body Simulation Optimization Plan
+
+## Current Architecture Overview
+The codebase implements an N-body simulation using a KD-tree for spatial partitioning. Key components:
+- Particle representation with position, velocity, radius, and mass
+- KD-tree implementation for spatial partitioning
+- Quickselect algorithm for tree construction
+- Parallel implementations of various components
+
+## Optimization Opportunities
+
+### 1. Memory Layout and Cache Optimization ✅
+- [x] Convert Particle struct to use SoA (Structure of Arrays) instead of AoS (Array of Structures)
+  - [x] Separate position, velocity, mass, and radius into parallel arrays
+  - [x] Maintain compatibility with original code
+  - [x] Implemented ParticleSystem class with efficient Vec-based storage
+
+**Implementation details:**
+- Created ParticleSystem that stores positions, velocities, masses, and radii in separate arrays
+- Added conversion methods between original Particle struct and ParticleSystem
+- Implemented SoA versions of the original particle generators
+- Added memory-aligned version (AlignedParticleSystem) for better SIMD performance
+
+### 2. SIMD Vectorization ✅
+- [x] Implement SIMD operations for particle force calculations
+  - [x] Added support for portable SIMD through feature flags
+  - [x] Implemented SIMD versions of distance and force calculations
+  - [x] Designed memory layout to be SIMD-friendly
+
+**Implementation details:**
+- Added portable_simd feature for std::simd support
+- Implemented SIMD versions of distance and acceleration calculations
+- Created AlignedParticleSystem with 4-element arrays for better vector alignment
+- Used f64x4 SIMD vectors for position and acceleration calculations
+
+### 3. KD-Tree Construction Optimization ✅
+- [x] Implement optimized tree structure using SOA pattern
+  - [x] Store node data in separate arrays for better cache locality
+  - [x] Used parallel algorithms where appropriate
+  - [x] Optimized chunk sizes for better cache performance
+
+**Implementation details:**
+- Created KDTreeSoA that stores node data in separate arrays for better cache locality
+- Used rayon for parallel tree construction
+- Optimized chunk size for better work distribution
+- Added more efficient build functions
+
+### 4. Force Calculation Optimization ✅
+- [x] Implement Barnes-Hut approximation more efficiently
+  - [x] Optimized force calculations to work with SoA layout
+  - [x] Kept the same THETA parameter (0.3) as the original implementation
+  - [x] Cached center-of-mass calculations in the tree structure
+
+**Implementation details:**
+- Implemented efficient force calculations in the KDTreeSoA structure
+- Kept the core Barnes-Hut algorithm but optimized for cache efficiency
+- Added parallel force calculation using rayon
+
+### 5. Memory Management ✅
+- [x] Implement better memory management for KD-tree nodes
+  - [x] Pre-allocate node memory to reduce allocation overhead
+  - [x] Minimize vector resizing operations with capacity hints
+  - [x] Reused tree structure across simulation steps
+
+**Implementation details:**
+- KDTreeSoA pre-allocates all needed memory based on particle count
+- Reuse tree structure across simulation steps to avoid reallocations
+- Used Vec::with_capacity where appropriate to minimize reallocations
+
+### 6. Parallelization Improvements ✅
+- [x] Implement better parallel force calculation
+  - [x] Used rayon for parallel force calculations with proper work distribution
+  - [x] Leveraged the SoA layout for more efficient parallel operations
+
+**Implementation details:**
+- Used rayon's par_iter_mut().enumerate() for parallel acceleration calculations
+- Maintained proper work distribution with balanced tree structure
+
+### 7. Algorithmic Improvements
+- [ ] Implement adaptive time stepping
+  - [ ] Current fixed time step could be optimized for better accuracy
+  - [ ] Consider particle clustering for distant interactions
+  - [ ] Implement higher-order integration methods
+
+### 8. I/O and Visualization
+- [ ] Optimize tree visualization and debugging output
+  - [ ] The current print_tree function could be optimized
+  - [ ] Consider using binary format for data output
+  - [ ] Implement efficient visualization pipeline
+
+## Implementation Priority
+1. Memory Layout and Cache Optimization ✅ (Completed)
+2. SIMD Vectorization ✅ (Completed)
+3. KD-Tree Construction Optimization ✅ (Completed)
+4. Force Calculation Optimization ✅ (Completed)
+5. Memory Management ✅ (Completed)
+6. Parallelization Improvements ✅ (Completed)
+7. Algorithmic Improvements (Future work)
+8. I/O and Visualization (Future work)
+
+## Performance Metrics
+- Measure and track:
+  - Tree construction time ✅
+  - Force calculation time per step ✅
+  - Memory usage
+  - Cache hit/miss rates
+  - SIMD utilization
+  - Parallel efficiency
+
+## Testing Strategy
+- [x] Implement benchmarks for each optimization
+- [x] Compare against current implementation
+- [x] Test with various particle counts and distributions
+- [x] Verify numerical accuracy after optimizations
+
+**Implementation details:**
+- Created benchmark.rs to compare performance across implementations
+- Added verify.rs to validate numerical correctness of optimizations
+- Designed tests with different particle counts to evaluate scaling behavior
+- Added energy conservation checking to ensure physical correctness
+
+## Verification
+To verify the correctness and performance of the optimizations:
+1. Run `cargo run --bin verify` to check that optimized and original versions produce similar results
+2. Run `cargo run --bin benchmark` to compare performance across implementations
+3. Run `cargo run -- -n <particles> -s <steps> -o` to use the optimized implementation in the main program
+
+## Notes
+- Maintain numerical stability throughout optimizations
+- Consider platform-specific optimizations
+- Document performance improvements
+- Keep code maintainable and readable 
