@@ -1,0 +1,66 @@
+# Optimization Plan for N-body Simulation with KD-Tree
+
+## Current Performance Analysis
+
+Examining the benchmark data shows:
+
+1. The simulation scales with increasing thread count, but with diminishing returns beyond 12-24 threads
+2. For 1,000,000 particles, even with 48 threads, each simulation step takes ~67 minutes
+3. There's a significant amount of system time, indicating potential memory allocation or GC pressure
+4. There are stack traces showing interrupts during execution, suggesting potential stability issues
+
+## Optimization Targets
+
+### 1. Memory Management and Allocation
+
+- Replace unnecessary array allocations with in-place operations
+- Pre-allocate vectors and reuse them across steps
+- Use StaticArrays for small fixed-size vectors (positions, velocities)
+- Implement memory pooling for KD-tree nodes
+
+### 2. Algorithm Improvements
+
+- Implement Barnes-Hut algorithm optimizations
+- Use a better tree building algorithm with improved median selection
+- Optimize the recursive accel_recur function to avoid deep stack traces
+- Implement tail recursion or iterative alternatives for accel_recur
+
+### 3. Parallelization Enhancements
+
+- Optimize work distribution for Threads.@threads
+- Implement task-based parallelism for better load balancing
+- Add SIMD vectorization for particle calculations
+- Consider GPU acceleration for large simulations
+
+### 4. Type Stability
+
+- Ensure all functions are type-stable
+- Add explicit type annotations where necessary
+- Use @inbounds for array access when safe
+- Use @fastmath where appropriate for physics calculations
+
+### 5. Data Structure Improvements
+
+- Optimize KDTree structure for better cache locality
+- Consider Space-Filling Curves (Z-order, Hilbert) for improved spatial locality
+- Store particles in structure-of-arrays format rather than array-of-structures
+- Use more efficient data representations for particles and tree nodes
+
+## Implementation Plan
+
+1. **Profile the existing code** using Julia's built-in profiler to identify hotspots
+2. **Establish benchmarks** with smaller datasets for rapid testing
+3. **Implement optimizations incrementally** in order of expected impact:
+   - StaticArrays for particle positions and velocities
+   - Improved memory management and pre-allocation
+   - Algorithm improvements
+   - Parallelization optimizations
+4. **Verify correctness** after each optimization
+5. **Measure performance improvements** after each major change
+
+## Expected Outcomes
+
+- 3-5x performance improvement for single-threaded execution
+- Better scaling with thread count (closer to linear)
+- Reduced memory pressure and GC overhead
+- Ability to handle larger particle counts efficiently 

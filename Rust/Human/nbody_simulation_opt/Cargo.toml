@@ -1,0 +1,42 @@
+[package]
+name = "rust_kdtree_nbody"
+version = "0.1.0"
+edition = "2021"
+authors = ["Mark Lewis <mlewis@trinity.edu>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+# To switch versions - rustup override set nightly
+
+[dependencies]
+clap = { version = "4.0.29", features = ["derive"] }
+fastrand = "1.4"
+num_cpus = "1.16.0"
+rayon = "1.8.1"
+
+[features]
+default = []
+portable_simd = []  # Will be used when the feature is stabilized
+
+[lib]
+name = "nbody_simulation_kd"
+path = "src/lib.rs"
+
+[[bin]]
+name = "nbody_simulation_kd"
+path = "src/main.rs"
+
+[[bin]]
+name = "benchmark"
+path = "src/bin/benchmark.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
+panic = "abort"
+
+[profile.benchmark]
+inherits = "release"
+lto = true
+codegen-units = 1
