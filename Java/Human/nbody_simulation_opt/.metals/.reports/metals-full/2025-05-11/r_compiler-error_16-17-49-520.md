@@ -1,0 +1,334 @@
+file://<WORKSPACE>/src/main/java/JKDTree.java
+### java.util.NoSuchElementException: next on empty iterator
+
+occurred in the presentation compiler.
+
+presentation compiler configuration:
+
+
+action parameters:
+uri: file://<WORKSPACE>/src/main/java/JKDTree.java
+text:
+```scala
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.random.RandomGenerator;
+import java.util.stream.IntStream;
+
+public class JKDTree {
+  static final int MAX_PARTS = 7;
+  static final double THETA = 0.3;
+  static final RandomGenerator rand = RandomGenerator.getDefault();
+  static final double G = 1.0; // Gravitational constant (using simulation units)
+
+  // For leaves
+  private int num_parts;
+  private int[] particles = new int[JKDTree.MAX_PARTS];
+
+  // For internal nodes
+  private int split_dim;
+  private double split_val;
+  private double m;
+  private double[] cm = new double[3];
+  private double size;
+  private int left;
+  private int right;
+
+  static ArrayList<JKDTree> allocate_node_vec(int num_parts) {
+    int num_nodes = 2 * (num_parts / (MAX_PARTS - 1) + 1);
+    ArrayList<JKDTree> ret = new ArrayList<>(num_nodes);
+    return ret;
+  }
+
+  // Returns the index of the last Node used in the construction.
+  static int build_tree(
+      int[] indices,
+      int start,
+      int end,
+      JSystem system,
+      int cur_node,
+      ArrayList<JKDTree> nodes) {
+    int np = end - start;
+    if (np <= MAX_PARTS) {
+      while (cur_node >= nodes.size()) {
+        nodes.add(new JKDTree());
+      }
+      nodes.get(cur_node).num_parts = np;
+      for (int i = 0; i < np; ++i) {
+        nodes.get(cur_node).particles[i] = indices[start + i];
+      }
+      return cur_node;
+    } else {
+      // Pick split dim and value
+      double[] min = { 1e100, 1e100, 1e100 };
+      double[] max = { -1e100, -1e100, -1e100 };
+      double m = 0.0;
+      double[] cm = { 0.0, 0.0, 0.0 };
+      for (int i = start; i < end; ++i) {
+        m += system.m(indices[i]);
+        cm[0] += system.m(indices[i]) * system.p(indices[i], 0);
+        cm[1] += system.m(indices[i]) * system.p(indices[i], 1);
+        cm[2] += system.m(indices[i]) * system.p(indices[i], 2);
+        min[0] = Math.min(min[0], system.p(indices[i], 0));
+        min[1] = Math.min(min[1], system.p(indices[i], 1));
+        min[2] = Math.min(min[2], system.p(indices[i], 2));
+        max[0] = Math.max(max[0], system.p(indices[i], 0));
+        max[1] = Math.max(max[1], system.p(indices[i], 1));
+        max[2] = Math.max(max[2], system.p(indices[i], 2));
+      }
+      cm[0] /= m;
+      cm[1] /= m;
+      cm[2] /= m;
+      int split_dim = 0;
+      if (max[1] - min[1] > max[split_dim] - min[split_dim]) {
+        split_dim = 1;
+      }
+      if (max[2] - min[2] > max[split_dim] - min[split_dim]) {
+        split_dim = 2;
+      }
+      double size = max[split_dim] - min[split_dim];
+
+      // Partition particles on split_dim
+      int mid = (start + end) / 2;
+      int s = start;
+      int e = end;
+      while (s + 1 < e) {
+        int pivot = rand.nextInt(s, e);
+        int swapTmp = indices[s];
+        indices[s] = indices[pivot];
+        indices[pivot] = swapTmp;
+        var low = s + 1;
+        var high = e - 1;
+        while (low <= high) {
+          if (system.p(indices[low], split_dim) < system.p(indices[s], split_dim)) {
+            low += 1;
+          } else {
+            int swapTmp2 = indices[low];
+            indices[low] = indices[high];
+            indices[high] = swapTmp2;
+            high -= 1;
+          }
+        }
+        int swapTmp3 = indices[s];
+        indices[s] = indices[high];
+        indices[high] = swapTmp3;
+        if (high < mid) {
+          s = high + 1;
+        } else if (high > mid) {
+          e = high;
+        } else {
+          s = e;
+        }
+      }
+      var split_val = system.p(indices[mid], split_dim);
+
+      // Recurse on children and build this node.
+      var left = build_tree(indices, start, mid, system, cur_node + 1, nodes);
+      var right = build_tree(indices, mid, end, system, left + 1, nodes);
+
+      while (cur_node >= nodes.size()) {
+        nodes.add(new JKDTree());
+      }
+      nodes.get(cur_node).num_parts = 0;
+      nodes.get(cur_node).split_dim = split_dim;
+      nodes.get(cur_node).split_val = split_val;
+      nodes.get(cur_node).m = m;
+      nodes.get(cur_node).cm[0] = cm[0];
+      nodes.get(cur_node).cm[1] = cm[1];
+      nodes.get(cur_node).cm[2] = cm[2];
+      nodes.get(cur_node).size = size;
+      nodes.get(cur_node).left = cur_node + 1;
+      nodes.get(cur_node).right = left + 1;
+
+      return right;
+    }
+  }
+
+  static void calc_pp_accel(JSystem system, int i, int j, double[] acc) {
+    double dx = system.p(i, 0) - system.p(j, 0);
+    double dy = system.p(i, 1) - system.p(j, 1);
+    double dz = system.p(i, 2) - system.p(j, 2);
+    var dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    var magi = -system.m(j) / (dist * dist * dist);
+    // if (j == 0 && Math.abs(1.0 - dist) < 1e-2) {
+    //   System.out.println("magi = " + magi);
+    // }
+    acc[0] += dx * magi;
+    acc[1] += dy * magi;
+    acc[2] += dz * magi;
+  }
+
+  static void accel_recur(int cur_node, int p, JSystem system, ArrayList<JKDTree> nodes, double[] acc) {
+    // println!("accel {}", cur_node);
+    if (nodes.get(cur_node).num_parts > 0) {
+      for (int i = 0; i < nodes.get(cur_node).num_parts; ++i) {
+        if (nodes.get(cur_node).particles[i] != p) {
+          calc_pp_accel(system, p, nodes.get(cur_node).particles[i], acc);
+        }
+      }
+    } else {
+      double dx = system.p(p, 0) - nodes.get(cur_node).cm[0];
+      double dy = system.p(p, 1) - nodes.get(cur_node).cm[1];
+      double dz = system.p(p, 2) - nodes.get(cur_node).cm[2];
+      var dist_sqr = dx * dx + dy * dy + dz * dz;
+      // println!("dist = {}, size = {}", dist, nodes[cur_node].size);
+      if (nodes.get(cur_node).size * nodes.get(cur_node).size < THETA * THETA * dist_sqr) {
+        var dist = Math.sqrt(dist_sqr);
+        var magi = -nodes.get(cur_node).m / (dist_sqr * dist);
+        acc[0] += dx * magi;
+        acc[1] += dy * magi;
+        acc[2] += dz * magi;
+      } else {
+        accel_recur(nodes.get(cur_node).left, p, system, nodes, acc);
+        accel_recur(nodes.get(cur_node).right, p, system, nodes, acc);
+      }
+    }
+  }
+
+  static void calc_accel(int p, JSystem system, ArrayList<JKDTree> nodes, double[] acc) {
+    accel_recur(0, p, system, nodes, acc);
+  }
+
+  static void print_tree(int step, ArrayList<JKDTree> tree, JSystem system) {
+    String fname = "tree" + step + ".txt";
+    try {
+      var pw = new java.io.PrintWriter(fname);
+
+      pw.println(tree.size());
+      for (JKDTree n : tree) {
+        if (n.num_parts > 0) {
+          pw.println("L " + n.num_parts);
+          for (int i = 0; i < n.num_parts; ++i) {
+            var p = n.particles[i];
+            pw.println(system.p(p, 0) + " " + system.p(p, 1) + " " + system.p(p, 2));
+          }
+        } else {
+          pw.println("I " + n.split_dim + " " + n.split_val + " " + n.left + " " + n.right);
+        }
+      }
+      pw.close();
+    } catch (IOException ex) {
+      System.out.println("Exception writing to file.\n");
+      ex.printStackTrace();
+    }
+  }
+
+  /**
+   * Calculate the total energy of the system (kinetic + potential)
+   * @param system The system to calculate energy for
+   * @return The total energy of the system
+   */
+  static double calculateTotalEnergy(JSystem system) {
+    double kineticEnergy = 0.0;
+    double potentialEnergy = 0.0;
+    
+    // Calculate kinetic energy: sum of 0.5 * m * v^2 for each particle
+    for (int i = 0; i < system.numBodies(); i++) {
+      double vx = system.v(i, 0);
+      double vy = system.v(i, 1);
+      double vz = system.v(i, 2);
+      double v2 = vx * vx + vy * vy + vz * vz;
+      kineticEnergy += 0.5 * system.m(i) * v2;
+    }
+    
+    // Calculate potential energy: sum of -G * m1 * m2 / r for each pair
+    for (int i = 0; i < system.numBodies(); i++) {
+      for (int j = i + 1; j < system.numBodies(); j++) {
+        double dx = system.p(i, 0) - system.p(j, 0);
+        double dy = system.p(i, 1) - system.p(j, 1);
+        double dz = system.p(i, 2) - system.p(j, 2);
+        double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        // Avoid division by zero
+        if (distance > 1e-10) {
+          potentialEnergy -= G * system.m(i) * system.m(j) / distance;
+        }
+      }
+    }
+    
+    return kineticEnergy + potentialEnergy;
+  }
+
+  static void simple_sim(JSystem system, double dt, int steps) {
+    double[][] acc = new double[system.numBodies()][3];
+
+    var tree = allocate_node_vec(system.numBodies());
+    int[] indices = new int[system.numBodies()];
+
+    // Calculate initial energy
+    double initialEnergy = calculateTotalEnergy(system);
+    System.out.println("Initial total energy: " + initialEnergy);
+
+    for (int step = 0; step < steps; ++step) {
+      IntStream.range(0, system.numBodies()).parallel().forEach(i -> {
+        indices[i] = i;
+      });
+      // var bstart = System.nanoTime();
+      build_tree(indices, 0, system.numBodies(), system, 0, tree);
+      // System.out.println("Build took: " + (System.nanoTime() - bstart)*1e-9);
+      // if (step % 10 == 0) {
+      //   print_tree(step, tree, system);
+      // }
+      // var astart = System.nanoTime();
+      IntStream.range(0, system.numBodies()).parallel().forEach(i -> {
+        calc_accel(i, system, tree, acc[i]);
+      });
+      // System.out.println("Accel took: " + (System.nanoTime() - astart)*1e-9);
+      IntStream.range(0, system.numBodies()).parallel().forEach(i -> {
+        system.incV(i, 0, dt * acc[i][0]);
+        system.incV(i, 1, dt * acc[i][1]);
+        system.incV(i, 2, dt * acc[i][2]);
+        system.incP(i, 0, dt * system.v(i, 0));
+        system.incP(i, 1, dt * system.v(i, 1));
+        system.incP(i, 2, dt * system.v(i, 2));
+        acc[i][0] = 0.0;
+        acc[i][1] = 0.0;
+        acc[i][2] = 0.0;
+      });
+      
+      // Optionally print energy every N steps to monitor conservation
+      if (step > 0 && step % 1000 == 0) {
+        double currentEnergy = calculateTotalEnergy(system);
+        double relativeError = Math.abs((currentEnergy - initialEnergy) / initialEnergy);
+        System.out.println("Step " + step + " - Energy: " + currentEnergy + 
+                           " (relative error: " + relativeError + ")");
+      }
+    }
+
+    // Calculate final energy and report conservation
+    double finalEnergy = calculateTotalEnergy(system);
+    double absoluteError = finalEnergy - initialEnergy;
+    double relativeError = Math.abs(absoluteError / initialEnergy);
+    
+    System.out.println("Final total energy: " + finalEnergy);
+    System.out.println("Absolute energy error: " + absoluteError);
+    System.out.println("Relative energy error: " + relativeError);
+  }
+
+}
+
+```
+
+
+
+#### Error stacktrace:
+
+```
+scala.collection.Iterator$$anon$19.next(Iterator.scala:973)
+	scala.collection.Iterator$$anon$19.next(Iterator.scala:971)
+	scala.collection.mutable.MutationTracker$CheckedIterator.next(MutationTracker.scala:76)
+	scala.collection.IterableOps.head(Iterable.scala:222)
+	scala.collection.IterableOps.head$(Iterable.scala:222)
+	scala.collection.AbstractIterable.head(Iterable.scala:935)
+	dotty.tools.dotc.interactive.InteractiveDriver.run(InteractiveDriver.scala:164)
+	dotty.tools.pc.CachingDriver.run(CachingDriver.scala:45)
+	dotty.tools.pc.WithCompilationUnit.<init>(WithCompilationUnit.scala:31)
+	dotty.tools.pc.SimpleCollector.<init>(PcCollector.scala:351)
+	dotty.tools.pc.PcSemanticTokensProvider$Collector$.<init>(PcSemanticTokensProvider.scala:63)
+	dotty.tools.pc.PcSemanticTokensProvider.Collector$lzyINIT1(PcSemanticTokensProvider.scala:63)
+	dotty.tools.pc.PcSemanticTokensProvider.Collector(PcSemanticTokensProvider.scala:63)
+	dotty.tools.pc.PcSemanticTokensProvider.provide(PcSemanticTokensProvider.scala:88)
+	dotty.tools.pc.ScalaPresentationCompiler.semanticTokens$$anonfun$1(ScalaPresentationCompiler.scala:111)
+```
+#### Short summary: 
+
+java.util.NoSuchElementException: next on empty iterator
