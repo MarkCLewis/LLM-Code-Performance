@@ -64,12 +64,12 @@ func (p *TreeNodePool) Get(size int) []KDTree {
 func (p *TreeNodePool) Put(nodes []KDTree) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	
+
 	// Clear node data to avoid memory leaks
 	for i := range nodes {
 		nodes[i] = empty_leaf()
 	}
-	
+
 	p.pool = append(p.pool, nodes)
 }
 
@@ -120,7 +120,7 @@ func build_tree(
 		max := [3]float64{-1e100, -1e100, -1e100}
 		m := 0.0
 		cm := [3]float64{0.0, 0.0, 0.0}
-		
+
 		// Batch process particles for better cache locality
 		for i := start; i < end; i++ {
 			p := &particles[indices[i]]
@@ -128,16 +128,28 @@ func build_tree(
 			cm[0] += p.m * p.p[0]
 			cm[1] += p.m * p.p[1]
 			cm[2] += p.m * p.p[2]
-			
+
 			// Calculate min/max in the same loop
-			if p.p[0] < min[0] { min[0] = p.p[0] }
-			if p.p[1] < min[1] { min[1] = p.p[1] }
-			if p.p[2] < min[2] { min[2] = p.p[2] }
-			if p.p[0] > max[0] { max[0] = p.p[0] }
-			if p.p[1] > max[1] { max[1] = p.p[1] }
-			if p.p[2] > max[2] { max[2] = p.p[2] }
+			if p.p[0] < min[0] {
+				min[0] = p.p[0]
+			}
+			if p.p[1] < min[1] {
+				min[1] = p.p[1]
+			}
+			if p.p[2] < min[2] {
+				min[2] = p.p[2]
+			}
+			if p.p[0] > max[0] {
+				max[0] = p.p[0]
+			}
+			if p.p[1] > max[1] {
+				max[1] = p.p[1]
+			}
+			if p.p[2] > max[2] {
+				max[2] = p.p[2]
+			}
 		}
-		
+
 		// Calculate center of mass
 		if m > 0 {
 			invM := 1.0 / m
@@ -145,7 +157,7 @@ func build_tree(
 			cm[1] *= invM
 			cm[2] *= invM
 		}
-		
+
 		// Find dimension with greatest spread
 		split_dim := 0
 		max_spread := max[0] - min[0]
@@ -160,7 +172,7 @@ func build_tree(
 
 		// Optimized partitioning for better cache behavior
 		mid := (start + end) / 2
-		
+
 		// Use quickselect algorithm for better performance
 		quickSelect(indices, start, end-1, mid, split_dim, particles)
 		split_val := particles[indices[mid]].p[split_dim]
@@ -190,10 +202,10 @@ func quickSelect(indices []int, left, right, k, split_dim int, particles []Parti
 	if left == right {
 		return
 	}
-	
+
 	pivotIndex := left + rand.Intn(right-left+1)
 	pivotIndex = partition(indices, left, right, pivotIndex, split_dim, particles)
-	
+
 	if k == pivotIndex {
 		return
 	} else if k < pivotIndex {
@@ -205,10 +217,10 @@ func quickSelect(indices []int, left, right, k, split_dim int, particles []Parti
 
 func partition(indices []int, left, right, pivotIndex, split_dim int, particles []Particle) int {
 	pivotValue := particles[indices[pivotIndex]].p[split_dim]
-	
+
 	// Move pivot to end
 	indices[pivotIndex], indices[right] = indices[right], indices[pivotIndex]
-	
+
 	// Move all elements smaller than pivot to the left
 	storeIndex := left
 	for i := left; i < right; i++ {
@@ -217,33 +229,33 @@ func partition(indices []int, left, right, pivotIndex, split_dim int, particles 
 			storeIndex++
 		}
 	}
-	
+
 	// Move pivot to its final place
 	indices[right], indices[storeIndex] = indices[storeIndex], indices[right]
-	
+
 	return storeIndex
 }
 
 // Optimized force calculation with iterative approach to reduce recursion overhead
 func accel_recur(cur_node int, p int, particles []Particle, nodes []KDTree) [3]float64 {
 	acc := [3]float64{0.0, 0.0, 0.0}
-	
+
 	// Use a stack to simulate recursion
 	type StackItem struct {
 		nodeIndex int
 	}
-	
+
 	stack := make([]StackItem, 0, 64) // Preallocate stack to avoid resizing
 	stack = append(stack, StackItem{cur_node})
-	
+
 	for len(stack) > 0 {
 		// Pop from stack
 		n := len(stack) - 1
 		item := stack[n]
 		stack = stack[:n]
-		
+
 		node := nodes[item.nodeIndex]
-		
+
 		if node.num_parts > 0 {
 			// Leaf node - direct calculation with all particles
 			for i := 0; i < node.num_parts; i++ {
@@ -260,7 +272,7 @@ func accel_recur(cur_node int, p int, particles []Particle, nodes []KDTree) [3]f
 			dy := particles[p].p[1] - node.cm[1]
 			dz := particles[p].p[2] - node.cm[2]
 			dist_sqr := dx*dx + dy*dy + dz*dz
-			
+
 			// Use Barnes-Hut approximation criterion
 			if node.size*node.size < THETA*THETA*dist_sqr {
 				// Far enough to use approximation
@@ -277,7 +289,7 @@ func accel_recur(cur_node int, p int, particles []Particle, nodes []KDTree) [3]f
 			}
 		}
 	}
-	
+
 	return acc
 }
 
@@ -322,59 +334,59 @@ func Simple_sim(bodies []Particle, dt float64, steps int, p int) {
 	if p <= 0 {
 		p = runtime.NumCPU()
 	}
-	
+
 	// Pre-allocate all memory needed for the simulation
 	n := len(bodies)
 	acc := make([][3]float64, n)
 	tree := allocate_node_vec(n)
 	indices := make([]int, n)
-	
+
 	// Pre-initialize indices to avoid repeated initialization
 	for i := 0; i < n; i++ {
 		indices[i] = i
 	}
 
 	// Calculate initial energy for verification
-	initialEnergy := CalculateSystemEnergy(bodies)
-	fmt.Printf("Initial system energy: %e\n", initialEnergy)
+	// initialEnergy := CalculateSystemEnergy(bodies)
+	// fmt.Printf("Initial system energy: %e\n", initialEnergy)
 
 	for step := 0; step < steps; step++ {
 		// Build tree - no need to reinitialize indices every step
 		build_tree(indices, 0, n, bodies, 0, &tree)
-		
+
 		// Calculate accelerations in parallel
 		parallel.WithNumGoroutines(p).For(n, func(i, _ int) {
 			acc[i] = calc_accel(i, bodies, tree)
 		})
-		
+
 		// Update positions in parallel
 		parallel.WithNumGoroutines(p).For(n, func(i, _ int) {
 			// Update velocity
 			bodies[i].v[0] += dt * acc[i][0]
 			bodies[i].v[1] += dt * acc[i][1]
 			bodies[i].v[2] += dt * acc[i][2]
-			
+
 			// Update position
 			bodies[i].p[0] += dt * bodies[i].v[0]
 			bodies[i].p[1] += dt * bodies[i].v[1]
 			bodies[i].p[2] += dt * bodies[i].v[2]
-			
+
 			// Clear acceleration for next step
 			acc[i][0] = 0.0
 			acc[i][1] = 0.0
 			acc[i][2] = 0.0
 		})
 	}
-	
+
 	// Return tree to the pool
 	nodePool.Put(tree)
 
 	// Calculate final energy and compare with initial energy
-	finalEnergy := CalculateSystemEnergy(bodies)
-	fmt.Printf("Final system energy: %e\n", finalEnergy)
-	energyDiff := math.Abs(finalEnergy - initialEnergy)
-	relativeError := energyDiff / math.Abs(initialEnergy)
-	fmt.Printf("Energy difference: %e (relative error: %e)\n", energyDiff, relativeError)
+	// finalEnergy := CalculateSystemEnergy(bodies)
+	// fmt.Printf("Final system energy: %e\n", finalEnergy)
+	// energyDiff := math.Abs(finalEnergy - initialEnergy)
+	// relativeError := energyDiff / math.Abs(initialEnergy)
+	// fmt.Printf("Energy difference: %e (relative error: %e)\n", energyDiff, relativeError)
 }
 
 func min(a, b int) int {

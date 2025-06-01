@@ -1,4 +1,3 @@
-// Java #5 - https://benchmarksgame-team.pages.debian.net/benchmarksgame/program/nbody-java-5.html
 /* The Computer Language Benchmarks Game
    https://salsa.debian.org/benchmarksgame-team/benchmarksgame/
 
@@ -7,21 +6,21 @@
 */
 
 import java.util.random.RandomGenerator;
-import java.util.stream.IntStream;
 
-public final class NBodySimulationPar {
+public final class nbody {
    public static void main(String[] args) {
-      int steps = Integer.parseInt(args[0]);
-      int numBodies = Integer.parseInt(args[1]);
+      int n = Integer.parseInt(args[0]);
 
-      NBodySystem bodies = new NBodySystem(numBodies);
-      // System.out.printf("%e\n", bodies.energy());
-      for (int i = 0; i < steps; ++i)
+      NBodySystem bodies = new NBodySystem(Integer.parseInt(args[1]));
+      // System.out.printf("%.9f\n", bodies.energy());
+      for (int i = 0; i < n; ++i) {
          bodies.advance(0.01);
-      // System.out.printf("%e\n", bodies.energy());
+      }
+      // System.out.printf("%.9f\n", bodies.energy());
    }
 
    final static class NBodySystem {
+      private static final double PI = 3.141592653589793;
       private static final int BODY_SIZE = 8;
 
       private static final int x = 0;
@@ -43,38 +42,41 @@ public final class NBodySimulationPar {
       public void advance(double dt) {
          final double[] bodies = _bodies;
 
-         IntStream.range(0, numBodies).parallel().forEach(i -> {
+         for (int i = 0; i < numBodies; ++i) {
             final int offset = BODY_SIZE * i;
 
-            for (int j = 0; j < numBodies; ++j) {
-               if (i != j) {
-                  final int ioffset = offset;
-                  final int joffset = BODY_SIZE * j;
+            for (int j = i + 1; j < numBodies; ++j) {
+               final int ioffset = offset;
+               final int joffset = BODY_SIZE * j;
 
-                  final double dx = bodies[ioffset + x] - bodies[joffset + x];
-                  final double dy = bodies[ioffset + y] - bodies[joffset + y];
-                  final double dz = bodies[ioffset + z] - bodies[joffset + z];
+               final double dx = bodies[ioffset + x] - bodies[joffset + x];
+               final double dy = bodies[ioffset + y] - bodies[joffset + y];
+               final double dz = bodies[ioffset + z] - bodies[joffset + z];
 
-                  final double dSquared = dx * dx + dy * dy + dz * dz;
-                  final double distance = Math.sqrt(dSquared);
-                  final double mag = dt / (dSquared * distance);
+               final double dSquared = dx * dx + dy * dy + dz * dz;
+               final double distance = Math.sqrt(dSquared);
+               final double mag = dt / (dSquared * distance);
 
-                  final double jmass = bodies[joffset + mass];
+               final double jmass = bodies[joffset + mass];
 
-                  bodies[ioffset + vx] -= dx * jmass * mag;
-                  bodies[ioffset + vy] -= dy * jmass * mag;
-                  bodies[ioffset + vz] -= dz * jmass * mag;
-               }
+               bodies[ioffset + vx] -= dx * jmass * mag;
+               bodies[ioffset + vy] -= dy * jmass * mag;
+               bodies[ioffset + vz] -= dz * jmass * mag;
+
+               final double imass = bodies[ioffset + mass];
+               bodies[joffset + vx] += dx * imass * mag;
+               bodies[joffset + vy] += dy * imass * mag;
+               bodies[joffset + vz] += dz * imass * mag;
             }
-         });
+         }
 
-         IntStream.range(0, numBodies).parallel().forEach(i -> {
+         for (int i = 0; i < numBodies; ++i) {
             final int ioffset = BODY_SIZE * i;
 
             bodies[ioffset + x] += dt * bodies[ioffset + vx];
             bodies[ioffset + y] += dt * bodies[ioffset + vy];
             bodies[ioffset + z] += dt * bodies[ioffset + vz];
-         });
+         }
       }
 
       public double energy() {
@@ -113,8 +115,7 @@ public final class NBodySimulationPar {
          return e;
       }
 
-      static void setBody(int index, double[] sys, double x, double y, double z, double vx, double vy, double vz,
-            double radius, double mass) {
+      static void setBody(int index, double[] sys, double x, double y, double z, double vx, double vy, double vz, double radius, double mass) {
          int base = index * BODY_SIZE;
          sys[base + 0] = x;
          sys[base + 1] = y;
@@ -128,9 +129,9 @@ public final class NBodySimulationPar {
 
       static double[] circularOrbits(int n) {
          var rand = RandomGenerator.getDefault();
-         var system = new double[(n + 1) * BODY_SIZE];
-         setBody(0, system, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00465047, 1.0);
-
+         var system = new double[(n+1) * BODY_SIZE];
+         setBody(0, system, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00465047, 1.0 );
+         
          for (int i = 0; i < n; ++i) {
             double d = 0.1 + (i * 5.0 / n);
             double v = Math.sqrt(1.0 / d);
@@ -139,14 +140,16 @@ public final class NBodySimulationPar {
             double y = d * Math.sin(theta);
             double vx = -v * Math.sin(theta);
             double vy = v * Math.cos(theta);
-            setBody(i + 1, system,
-                  x, y, 0.0,
-                  vx, vy, 0.0,
-                  1e-14,
-                  1e-7);
+            setBody(i+1, system,
+               x, y, 0.0,
+               vx, vy, 0.0,
+               1e-14,
+               1e-7
+            );
          }
          return system;
       }
+
    }
 
 }

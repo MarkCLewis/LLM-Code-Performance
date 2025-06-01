@@ -415,8 +415,8 @@ public class OptimizedKDTree {
         }
         
         // Calculate initial energy
-        double initialEnergy = calculateTotalEnergy(system);
-        System.out.println("Initial total energy: " + initialEnergy);
+        // double initialEnergy = calculateTotalEnergy(system);
+        // System.out.println("Initial total energy: " + initialEnergy);
         
         long startTime = System.nanoTime();
         
@@ -481,28 +481,28 @@ public class OptimizedKDTree {
             FORK_JOIN_POOL.invoke(new UpdateTask(0, system.numBodies(), system, accelerations, dt));
             
             // Periodically check energy and print diagnostics
-            if (step > 0 && (step % 1000 == 0 || step == steps - 1)) {
-                double currentEnergy = calculateTotalEnergy(system);
-                double relativeError = Math.abs((currentEnergy - initialEnergy) / initialEnergy);
+            // if (step > 0 && (step % 1000 == 0 || step == steps - 1)) {
+            //     double currentEnergy = calculateTotalEnergy(system);
+            //     double relativeError = Math.abs((currentEnergy - initialEnergy) / initialEnergy);
                 
-                System.out.println("Step " + step + 
-                                  " - Energy: " + currentEnergy + 
-                                  " (relative error: " + relativeError + ")" +
-                                  " - Force calculations: " + forceCalculations.get());
-            }
+            //     System.out.println("Step " + step + 
+            //                       " - Energy: " + currentEnergy + 
+            //                       " (relative error: " + relativeError + ")" +
+            //                       " - Force calculations: " + forceCalculations.get());
+            // }
         }
         
         long endTime = System.nanoTime();
         double elapsedSeconds = (endTime - startTime) / 1_000_000_000.0;
         
         // Calculate final energy and report conservation
-        double finalEnergy = calculateTotalEnergy(system);
-        double absoluteError = finalEnergy - initialEnergy;
-        double relativeError = Math.abs(absoluteError / initialEnergy);
+        // double finalEnergy = calculateTotalEnergy(system);
+        // double absoluteError = finalEnergy - initialEnergy;
+        // double relativeError = Math.abs(absoluteError / initialEnergy);
         
         System.out.println("Simulation completed in " + elapsedSeconds + " seconds");
-        System.out.println("Final total energy: " + finalEnergy);
-        System.out.println("Absolute energy error: " + absoluteError);
-        System.out.println("Relative energy error: " + relativeError);
+        // System.out.println("Final total energy: " + finalEnergy);
+        // System.out.println("Absolute energy error: " + absoluteError);
+        // System.out.println("Relative energy error: " + relativeError);
     }
 } 

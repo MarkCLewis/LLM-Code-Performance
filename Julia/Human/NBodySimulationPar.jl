@@ -83,7 +83,7 @@ end
 # Planets: Sun, Jupiter, Saturn, Uranus, Neptune
 function nbody(steps::Int64, numBodies::Int64)
     bodies = circular_orbits(numBodies)
-    bodies[2] = Body(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1e-7)
+    # bodies[2] = Body(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1e-7)
 
 #    @printf("%.9f\n", energy(bodies))
     

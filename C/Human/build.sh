@@ -1,1 +1,1 @@
-gcc $1 -lm -fopenmp -O3 -march=native -ffast-math -flto -DNDEBUG -std=c99
+clang $1 -lm -fopenmp -march=native -ffast-math -flto -DNDEBUG -std=c17 -Ofast

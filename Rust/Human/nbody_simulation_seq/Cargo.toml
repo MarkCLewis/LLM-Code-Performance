@@ -1,0 +1,17 @@
+[package]
+name = "nbody_simulation_seq"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+fastrand = "1.4"
+
+[build]
+rustflags = ["-C", "target-cpu=native"]
+
+[profile.release]
+lto = "fat"
+opt-level = 3      # Default for release, ensure it's set
+debug = false      # Default for release, smaller binary, potentially faster
+codegen-units = 1  # Maximize intra-crate optimization scope
+panic = 'abort'    # Optional: Slightly smaller/faster code by aborting on panic instead of unwinding

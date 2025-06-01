@@ -6,7 +6,7 @@ do
   cd $author
   for file in *.c
 	do
-    ./build.sh $file
+		./build.sh $file
 		echo $author $file >> ../times.txt
 		for cnt in {1..7}
 		do

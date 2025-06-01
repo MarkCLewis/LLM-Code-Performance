@@ -1,4 +1,3 @@
-// Go #3 - https://benchmarksgame-team.pages.debian.net/benchmarksgame/program/nbody-go-3.html
 /* The Computer Language Benchmarks Game
  * https://salsa.debian.org/benchmarksgame-team/benchmarksgame/
  *
@@ -12,14 +11,14 @@ package main
 
 import (
 	"flag"
-	"fmt"
-
-	//    "fmt"
 	"math"
 	"math/rand/v2"
 	"strconv"
+)
 
-	"github.com/dgravesa/go-parallel/parallel"
+const (
+	solarMass   = 4 * math.Pi * math.Pi
+	daysPerYear = 365.24
 )
 
 type Position struct{ x, y, z float64 }
@@ -67,54 +66,53 @@ func energy(sys *System) float64 {
 	return e
 }
 
-func advance(dt float64, sys *System, p int) {
+func advance(dt float64, sys *System) {
 	N := len(sys.s)
-
-	parallel.WithNumGoroutines(p).For(N, func(i, _ int) {
+	for i := 0; i < N-1; i++ {
 		_vx, _vy, _vz := sys.v[i].x, sys.v[i].y, sys.v[i].z
 
-		for j := 0; j < N; j++ {
-			if j != i {
+		for j := i + 1; j < N; j++ {
 
-				dx := sys.s[i].x - sys.s[j].x
-				dy := sys.s[i].y - sys.s[j].y
-				dz := sys.s[i].z - sys.s[j].z
+			dx := sys.s[i].x - sys.s[j].x
+			dy := sys.s[i].y - sys.s[j].y
+			dz := sys.s[i].z - sys.s[j].z
 
-				dSquared := dx*dx + dy*dy + dz*dz
-				distance := math.Sqrt(dSquared)
-				mag := (dt / (dSquared * distance))
-				_vx -= dx * sys.v[j].m * mag
-				_vy -= dy * sys.v[j].m * mag
-				_vz -= dz * sys.v[j].m * mag
-			}
+			dSquared := dx*dx + dy*dy + dz*dz
+			distance := math.Sqrt(dSquared)
+			mag := (dt / (dSquared * distance))
+			mi := sys.v[i].m
+			_vx -= dx * sys.v[j].m * mag
+			_vy -= dy * sys.v[j].m * mag
+			_vz -= dz * sys.v[j].m * mag
+			sys.v[j].x += dx * mi * mag
+			sys.v[j].y += dy * mi * mag
+			sys.v[j].z += dz * mi * mag
 		}
 		sys.v[i].x, sys.v[i].y, sys.v[i].z = _vx, _vy, _vz
-	})
+	}
 
-	parallel.WithNumGoroutines(p).For(N, func(i, _ int) {
+	for i := 0; i < N; i++ {
 		sys.s[i].x += dt * sys.v[i].x
 		sys.s[i].y += dt * sys.v[i].y
 		sys.s[i].z += dt * sys.v[i].z
-	})
+	}
 }
 
 func main() {
 	var steps int
 	var n int
-	var p int
 	flag.Parse()
 	if flag.NArg() > 0 {
 		steps, _ = strconv.Atoi(flag.Arg(0))
 		n, _ = strconv.Atoi(flag.Arg(1))
-		p, _ = strconv.Atoi(flag.Arg(2))
 	}
 
 	sys := circular_orbits(n)
 
-	//    fmt.Printf("%.9f\n", energy(&sys))
+	// fmt.Printf("%.9f\n", energy())
 	for i := 0; i < steps; i++ {
-		advance(0.01, &sys, p)
+		advance(0.01, &sys)
 	}
-	//    fmt.Printf("%.9f\n", energy(&sys))
-	fmt.Printf("Body[0] %e %e %e\n", sys.s[0].x, sys.s[0].y, sys.s[0].z)
+	// fmt.Printf("%.9f\n", energy())
+
 }

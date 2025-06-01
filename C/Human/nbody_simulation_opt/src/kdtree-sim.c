@@ -56,33 +56,33 @@ int main(int argc, char *argv[]) {
   Particle_array_t particles = circular_orbits(n);
   
   // Calculate initial energy to verify accuracy
-  SystemEnergy initial_energy = calculate_system_energy(&particles);
-  print_energy_info("Initial Energy", &initial_energy);
+  // SystemEnergy initial_energy = calculate_system_energy(&particles);
+  // print_energy_info("Initial Energy", &initial_energy);
   
   // Run simulation
   simple_sim(&particles, dt, steps);
   
   // Calculate final energy and verify conservation
-  SystemEnergy final_energy = calculate_system_energy(&particles);
-  print_energy_info("Final Energy", &final_energy);
+  // SystemEnergy final_energy = calculate_system_energy(&particles);
+  // print_energy_info("Final Energy", &final_energy);
   
   // Calculate energy difference (should be close to zero for a good simulation)
-  double energy_diff = fabs(final_energy.total - initial_energy.total);
-  double energy_rel_error = energy_diff / fabs(initial_energy.total);
+  // double energy_diff = fabs(final_energy.total - initial_energy.total);
+  // double energy_rel_error = energy_diff / fabs(initial_energy.total);
   
-  printf("\n=== Energy Conservation ===\n");
-  printf("  Absolute difference: %.10e\n", energy_diff);
-  printf("  Relative error:      %.10e (%.6f%%)\n", 
-         energy_rel_error, energy_rel_error * 100.0);
+  // printf("\n=== Energy Conservation ===\n");
+  // printf("  Absolute difference: %.10e\n", energy_diff);
+  // printf("  Relative error:      %.10e (%.6f%%)\n", 
+  //        energy_rel_error, energy_rel_error * 100.0);
   
   // Assess accuracy
-  if (energy_rel_error < 1e-3) {
-    printf("  Status: GOOD - Energy is well conserved\n");
-  } else if (energy_rel_error < 1e-2) {
-    printf("  Status: ACCEPTABLE - Minor energy drift\n");
-  } else {
-    printf("  Status: POOR - Significant energy drift, simulation accuracy concerns\n");
-  }
+  // if (energy_rel_error < 1e-3) {
+  //   printf("  Status: GOOD - Energy is well conserved\n");
+  // } else if (energy_rel_error < 1e-2) {
+  //   printf("  Status: ACCEPTABLE - Minor energy drift\n");
+  // } else {
+  //   printf("  Status: POOR - Significant energy drift, simulation accuracy concerns\n");
+  // }
   
   // Calculate and print elapsed time
   double elapsed = get_time() - start_time;

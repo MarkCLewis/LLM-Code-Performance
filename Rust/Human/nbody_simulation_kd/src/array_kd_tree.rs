@@ -11,16 +11,9 @@ use crate::quickstat::*;
 
 //use super::array_particle::Particle;
 
-// Add portable_simd feature when available
-#[cfg(feature = "portable_simd")]
-use std::simd::*;
-
 const MAX_PARTS: usize = 8;
 const THETA: f64 = 0.3;
 const NEGS: [usize; MAX_PARTS] = [usize::MAX; MAX_PARTS];
-
-// Adjust chunk size for better cache performance and parallel efficiency
-const OPTIMAL_CHUNK_SIZE: usize = 8192;
 
 #[derive(Clone, Copy)]
 pub enum KDTree {
@@ -43,183 +36,12 @@ pub enum KDTree {
 impl KDTree {
     pub fn leaf<'a>(num_parts: usize, particles: [usize; MAX_PARTS]) -> KDTree {
         KDTree::Leaf {
-            num_parts,
+            num_parts: num_parts,
             leaf_parts: particles,
         }
     }
 }
 
-// Optimized SOA-based KD-tree
-#[derive(Clone)]
-pub struct KDTreeSoA {
-    // Node storage using SOA pattern
-    node_types: Vec<u8>, // 0 for leaf, 1 for internal
-    split_dims: Vec<usize>,
-    split_vals: Vec<f64>,
-    masses: Vec<f64>,
-    centers_of_mass: Vec<[f64; 3]>,
-    sizes: Vec<f64>,
-    lefts: Vec<usize>,
-    rights: Vec<usize>,
-    
-    // Leaf storage
-    leaf_counts: Vec<usize>,
-    leaf_particles: Vec<Vec<usize>>,
-    
-    // Total number of nodes
-    node_count: usize,
-}
-
-impl KDTreeSoA {
-    pub fn new(capacity: usize) -> Self {
-        let node_capacity = nodes_needed_for_particles(capacity);
-        
-        KDTreeSoA {
-            node_types: vec![0; node_capacity],
-            split_dims: vec![0; node_capacity],
-            split_vals: vec![0.0; node_capacity],
-            masses: vec![0.0; node_capacity],
-            centers_of_mass: vec![[0.0, 0.0, 0.0]; node_capacity],
-            sizes: vec![0.0; node_capacity],
-            lefts: vec![0; node_capacity],
-            rights: vec![0; node_capacity],
-            
-            leaf_counts: vec![0; node_capacity],
-            leaf_particles: vec![Vec::new(); node_capacity],
-            
-            node_count: 0,
-        }
-    }
-    
-    // Build tree from system
-    pub fn build(&mut self, system: &ParticleSystem) -> usize {
-        let mut indices: Vec<usize> = (0..system.count).collect();
-        self.node_count = 0;
-        self.build_node(&mut indices, system)
-    }
-    
-    fn build_node(&mut self, indices: &mut [usize], system: &ParticleSystem) -> usize {
-        let node_idx = self.node_count;
-        self.node_count += 1;
-        
-        if indices.len() <= MAX_PARTS {
-            // Create leaf node
-            self.node_types[node_idx] = 0;
-            self.leaf_counts[node_idx] = indices.len();
-            self.leaf_particles[node_idx] = indices.to_vec();
-            return node_idx;
-        }
-        
-        // Create internal node
-        self.node_types[node_idx] = 1;
-        
-        // Calculate bounds and center of mass
-        let mut min = [f64::MAX, f64::MAX, f64::MAX];
-        let mut max = [f64::MIN, f64::MIN, f64::MIN];
-        let mut m = 0.0;
-        let mut cm = [0.0, 0.0, 0.0];
-        
-        for &i in indices.iter() {
-            m += system.masses[i];
-            cm[0] += system.masses[i] * system.positions[i][0];
-            cm[1] += system.masses[i] * system.positions[i][1];
-            cm[2] += system.masses[i] * system.positions[i][2];
-            
-            for d in 0..3 {
-                min[d] = f64::min(min[d], system.positions[i][d]);
-                max[d] = f64::max(max[d], system.positions[i][d]);
-            }
-        }
-        
-        cm[0] /= m;
-        cm[1] /= m;
-        cm[2] /= m;
-        
-        // Determine split dimension
-        let mut split_dim = 0;
-        for dim in 1..3 {
-            if max[dim] - min[dim] > max[split_dim] - min[split_dim] {
-                split_dim = dim;
-            }
-        }
-        
-        // Store node data
-        self.masses[node_idx] = m;
-        self.centers_of_mass[node_idx] = cm;
-        self.split_dims[node_idx] = split_dim;
-        self.sizes[node_idx] = max[split_dim] - min[split_dim];
-        
-        // Partition indices based on positions
-        let mid = indices.len() / 2;
-        quickstat_index(indices, mid, |i1, i2| {
-            system.positions[i1][split_dim] < system.positions[i2][split_dim]
-        });
-        
-        self.split_vals[node_idx] = system.positions[indices[mid]][split_dim];
-        
-        // Recursively build child nodes
-        let (left_indices, right_indices) = indices.split_at_mut(mid);
-        
-        self.lefts[node_idx] = self.build_node(left_indices, system);
-        self.rights[node_idx] = self.build_node(right_indices, system);
-        
-        node_idx
-    }
-    
-    // Compute acceleration for a particle
-    pub fn calc_accel(&self, p_idx: usize, system: &ParticleSystem) -> [f64; 3] {
-        self.accel_recur(0, p_idx, system)
-    }
-    
-    fn accel_recur(&self, node_idx: usize, p_idx: usize, system: &ParticleSystem) -> [f64; 3] {
-        if node_idx >= self.node_count {
-            return [0.0, 0.0, 0.0];
-        }
-        
-        if self.node_types[node_idx] == 0 {
-            // Leaf node - compute direct interactions
-            let mut acc = [0.0, 0.0, 0.0];
-            
-            for &i in &self.leaf_particles[node_idx][0..self.leaf_counts[node_idx]] {
-                if i != p_idx {
-                    let pp_acc = calc_pp_accel_soa(p_idx, i, system);
-                    acc[0] += pp_acc[0];
-                    acc[1] += pp_acc[1];
-                    acc[2] += pp_acc[2];
-                }
-            }
-            
-            acc
-        } else {
-            // Internal node - use Barnes-Hut approximation when possible
-            let p = &system.positions[p_idx];
-            let cm = &self.centers_of_mass[node_idx];
-            
-            let dx = p[0] - cm[0];
-            let dy = p[1] - cm[1];
-            let dz = p[2] - cm[2];
-            let dist_sqr = dx*dx + dy*dy + dz*dz;
-            
-            if self.sizes[node_idx] * self.sizes[node_idx] < THETA * THETA * dist_sqr {
-                // Far enough - use approximation
-                let dist = f64::sqrt(dist_sqr);
-                let magi = -self.masses[node_idx] / (dist_sqr * dist);
-                [dx * magi, dy * magi, dz * magi]
-            } else {
-                // Too close - traverse children
-                let left_acc = self.accel_recur(self.lefts[node_idx], p_idx, system);
-                let right_acc = self.accel_recur(self.rights[node_idx], p_idx, system);
-                [
-                    left_acc[0] + right_acc[0],
-                    left_acc[1] + right_acc[1],
-                    left_acc[2] + right_acc[2]
-                ]
-            }
-        }
-    }
-}
-
-// Original functionality
 fn nodes_needed_for_particles(num_parts: usize) -> usize {
     if num_parts <= MAX_PARTS {
         1
@@ -799,39 +621,46 @@ pub fn calc_accel(p: usize, particles: &Vec<Particle>, nodes: &Vec<KDTree>) -> [
 }
 
 pub fn simple_sim(bodies: &mut Vec<Particle>, dt: f64, steps: i64) {
-    // let initial_energy = calc_total_energy(bodies);
-    // println!("Initial total energy: {:.6e}", initial_energy);
-
-    for step in 0..steps {
-        let mut indices = Vec::new();
-        for i in 0..bodies.len() {
-            indices.push(i);
-        }
-        let mut nodes = allocate_node_vec(bodies.len());
-        build_tree(&mut indices, 0, bodies.len(), bodies, 0, &mut nodes);
-
-        // Calculate accelerations
-        let mut accels = vec![[0.0, 0.0, 0.0]; bodies.len()];
-        for i in 0..bodies.len() {
-            accels[i] = calc_accel(i, bodies, &nodes);
-        }
-
-        // Update positions and velocities
-        for i in 0..bodies.len() {
-            bodies[i].v[0] += accels[i][0] * dt;
-            bodies[i].v[1] += accels[i][1] * dt;
-            bodies[i].v[2] += accels[i][2] * dt;
-            bodies[i].p[0] += bodies[i].v[0] * dt;
-            bodies[i].p[1] += bodies[i].v[1] * dt;
-            bodies[i].p[2] += bodies[i].v[2] * dt;
-        }
+    let mut acc = Vec::new();
+    for _ in 0..bodies.len() {
+        acc.push([0.0, 0.0, 0.0])
     }
+    // let mut time = Instant::now();
+    let mut tree = allocate_node_vec(bodies.len());
+    let mut indices: Vec<usize> = (0..bodies.len()).collect();
 
-    // let final_energy = calc_total_energy(bodies);
-    // println!("Final total energy: {:.6e}", final_energy);
-    // println!("Energy change: {:.6e} ({:.2}%)", 
-    //     final_energy - initial_energy,
-    //     (final_energy - initial_energy).abs() / initial_energy.abs() * 100.0);
+    for _step in 0..steps {
+        // if step % 100 == 0 {
+        //     let elapsed_secs = time.elapsed().as_nanos() as f64 / 1e9;
+        //     println!("Step = {}, duration = {}, n = {}, nodes = {}", step, elapsed_secs, bodies.len(), tree.len());
+        //     time = Instant::now();
+        // }
+        // for i in 0..bodies.len() {
+        //     indices[i] = i;
+        // }
+        indices.par_iter_mut().enumerate().for_each(|(i, ind)| *ind = i);
+        // build_tree(&mut indices, 0, bodies.len(), bodies, 0, &mut tree);
+        build_tree_par4(&mut indices, 0, bodies, &mut tree, 1);
+        // if step % 10 == 0 {
+        //     print_tree(step, &tree, &bodies);
+        // }
+        acc.par_iter_mut().enumerate().for_each(|(i, acc)| *acc = calc_accel(i, &bodies, &tree));
+
+        bodies.par_iter_mut().zip(&mut acc).for_each(|(b, a)| {
+            b.v[0] += dt * a[0];
+            b.v[1] += dt * a[1];
+            b.v[2] += dt * a[2];
+            let dx = dt * b.v[0];
+            let dy = dt * b.v[1];
+            let dz = dt * b.v[2];
+            b.p[0] += dx;
+            b.p[1] += dy;
+            b.p[2] += dz;
+            a[0] = 0.0;
+            a[1] = 0.0;
+            a[2] = 0.0;
+        });
+    }
 }
 
 fn print_tree(step: i64, tree: &Vec<KDTree>, particles: &Vec<Particle>) -> std::io::Result<()> {
@@ -860,47 +689,6 @@ fn print_tree(step: i64, tree: &Vec<KDTree>, particles: &Vec<Particle>) -> std::
     }
 
     Ok(())
-}
-
-// New optimized simulation function using SOA approach
-pub fn simple_sim_soa(system: &mut ParticleSystem, dt: f64, steps: i64) {
-    // let initial_energy = calc_total_energy_soa(system);
-    // println!("Initial total energy: {:.6e}", initial_energy);
-    
-    // Create KD tree - only once, reuse for each step
-    let mut kdtree = KDTreeSoA::new(system.count);
-    
-    // Temporary acceleration storage
-    let mut accels = vec![[0.0, 0.0, 0.0]; system.count];
-    
-    for step in 0..steps {
-        // Build tree
-        kdtree.build(system);
-        
-        // Calculate accelerations in parallel
-        accels.par_iter_mut().enumerate().for_each(|(i, acc)| {
-            *acc = kdtree.calc_accel(i, system);
-        });
-        
-        // Update velocities and positions
-        for i in 0..system.count {
-            // Update velocity first (using old position)
-            system.velocities[i][0] += accels[i][0] * dt;
-            system.velocities[i][1] += accels[i][1] * dt;
-            system.velocities[i][2] += accels[i][2] * dt;
-            
-            // Then update position (using new velocity)
-            system.positions[i][0] += system.velocities[i][0] * dt;
-            system.positions[i][1] += system.velocities[i][1] * dt;
-            system.positions[i][2] += system.velocities[i][2] * dt;
-        }
-    }
-    
-    // let final_energy = calc_total_energy_soa(system);
-    // println!("Final total energy: {:.6e}", final_energy);
-    // println!("Energy change: {:.6e} ({:.2}%)", 
-    //     final_energy - initial_energy,
-    //     (final_energy - initial_energy).abs() / initial_energy.abs() * 100.0);
 }
 
 #[cfg(test)]

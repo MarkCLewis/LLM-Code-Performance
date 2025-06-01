@@ -21,7 +21,7 @@ def processTimeFile(file: File): Unit = {
       if (realSecs.nonEmpty) {
         val (ravg, rstd) = stats(realSecs)
         val (uavg, ustd) = stats(userSecs)
-        println(f"$author $version \\shortstack[l]{$$$ravg%1.2f \\pm $rstd%1.2f$$ \\\\ $$$uavg%1.2f \\pm $ustd%1.2f$$}")
+        println(f"$author $version \\shortstack[c]{$$$ravg%1.2f \\pm $rstd%1.2f$$ \\\\ $$${uavg/ravg}%1.2f$$}")
         realSecs = Nil
         userSecs = Nil
       }
@@ -37,7 +37,7 @@ def processTimeFile(file: File): Unit = {
   }
   val (ravg, rstd) = stats(realSecs)
   val (uavg, ustd) = stats(userSecs)
-  println(f"$author $version \\shortstack[l]{$$$ravg%1.2f \\pm $rstd%1.2f$$ \\\\ $$$uavg%1.2f \\pm $ustd%1.2f$$}")
+  println(f"$author $version \\shortstack[c]{$$$ravg%1.2f \\pm $rstd%1.2f$$ \\\\ $$${uavg/ravg}%1.2f$$}")
   source.close()
 }
 
