@@ -131,9 +131,9 @@ def main():
     Main function to run the parallel N-body simulation.
     """
     # Simulation parameters
-    n_orbiting_bodies = 1_000_000
+    n_orbiting_bodies = 10_000
     central_body_mass = 1_000_000
-    n_steps = 1000
+    n_steps = 100
     dt = 0.01
 
     # Parallelization parameters
@@ -173,7 +173,7 @@ def main():
             pos += vel * dt
             g_vel = vel # Ensure the global velocity is updated for the next energy calc.
             
-            if (step + 1) % 100 == 0:
+            if (step + 1) % 1 == 0:
                 print(f"  - Step {step + 1}/{n_steps} completed.")
         
         sim_end_time = time.time()

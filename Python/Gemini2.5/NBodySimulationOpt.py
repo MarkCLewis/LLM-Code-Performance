@@ -184,7 +184,7 @@ def parallel_force_calculator(indices_chunk):
 def main():
     n_orbiting_bodies = 100_000
     central_body_mass = 1_000_000
-    n_steps = 1000
+    n_steps = 10
     dt = 0.01
 
     num_processes = mp.cpu_count()
